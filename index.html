@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barber Master - Gestión</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        /* Configuración de colores y fuentes de la App */
+        body { background-color: #121212; color: white; font-family: sans-serif; }
+        .bg-ultra-depth { background: radial-gradient(circle at top left, #1a1a1a, #000000); }
+        .text-gold { color: #FFD700; }
+        .bg-gold { background-color: #FFD700; }
+        .text-green-app { color: #00D4AA; }
+        .bg-green-app { background-color: #00D4AA; }
+        .glass-panel { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .input-pro { background: rgba(30, 30, 30, 0.8); border: 1px solid #333; color: white; }
+        .loader { border-top-color: #D50000; -webkit-animation: spinner 1.5s linear infinite; animation: spinner 1.5s linear infinite; }
+        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        /* Animaciones */
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body class="bg-ultra-depth min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
+
+    <div class="absolute top-20 left-10 w-2 h-2 bg-white opacity-30 rounded-full"></div>
+    <div class="absolute top-40 right-20 w-3 h-3 bg-red-900 opacity-40 rounded-full"></div>
+    <div class="absolute bottom-32 left-32 w-1 h-1 bg-white opacity-20 rounded-full"></div>
+
+    <div id="globalLoader" class="fixed inset-0 bg-black z-50 flex flex-col items-center justify-center hidden">
+        <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mb-4"></div>
+        <h2 class="text-center text-white text-xl font-semibold">Cargando...</h2>
+    </div>
+
+    <div id="loginView" class="w-full max-w-md p-6 fade-in">
+        <div class="text-center mb-10">
+            <div class="inline-block p-4 rounded-full bg-red-900 bg-opacity-20 mb-4 border border-red-900/30">
+                <i class="fa-solid fa-calendar-plus text-4xl text-white"></i>
+            </div>
+            <h1 class="text-3xl font-bold tracking-widest text-white">BARBER MASTER</h1>
+            <p class="text-gray-400 text-sm tracking-wide mt-1">Gestión profesional Web</p>
+        </div>
+
+        <div class="glass-panel rounded-2xl p-6 shadow-2xl">
+            <div class="flex mb-6 border-b border-gray-700 pb-2">
+                <button class="flex-1 text-center font-bold text-white border-r border-gray-700">INGRESAR</button>
+                <button class="flex-1 text-center font-bold text-gray-500 cursor-not-allowed">REGISTRARSE</button>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <input type="tel" id="loginPhone" placeholder="Teléfono Móvil (Ej: 5xxxxxxx)" 
+                        class="input-pro w-full px-4 py-3 rounded-lg focus:outline-none focus:border-red-500 transition-colors">
+                </div>
+                <div class="relative">
+                    <input type="password" id="loginPass" placeholder="Contraseña" 
+                        class="input-pro w-full px-4 py-3 rounded-lg focus:outline-none focus:border-red-500 transition-colors">
+                    <i class="fa-solid fa-eye absolute right-4 top-4 text-gray-500 cursor-pointer" onclick="togglePass()"></i>
+                </div>
+                
+                <div class="text-right">
+                    <a href="#" class="text-xs text-gray-400 hover:text-white">¿Olvidaste tu contraseña?</a>
+                </div>
+
+                <button onclick="doLogin()" class="w-full bg-[#D50000] hover:bg-red-700 text-white font-bold py-3 rounded-lg shadow-lg transform transition hover:scale-105">
+                    ACCEDER AHORA
+                </button>
+            </div>
+        </div>
+        <p class="text-center text-gray-600 text-xs mt-8">Solo cuentas verificadas pueden acceder a la web.</p>
+    </div>
+
+    <div id="dashboardView" class="w-full max-w-md h-screen flex flex-col hidden fade-in bg-black">
+        
+        <div class="flex items-center justify-between p-5 bg-gradient-to-b from-[#1a1a1a] to-black">
+            <button onclick="logout()" class="p-2 bg-gray-800 rounded-full hover:bg-gray-700 transition">
+                <i class="fa-solid fa-right-from-bracket text-white"></i>
+            </button>
+            <h2 class="text-xl font-bold tracking-wider text-white">NEGOCIO</h2>
+            <button id="btnMenu" class="p-2 opacity-0 cursor-default">
+                <i class="fa-solid fa-bars text-white"></i>
+            </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto pb-10">
+            
+            <div class="flex flex-col items-center mt-4 mb-8">
+                <div class="w-24 h-24 rounded-full bg-[#2C2C2E] shadow-xl overflow-hidden border-2 border-gray-700">
+                    <img id="shopLogo" src="https://via.placeholder.com/150" class="w-full h-full object-cover">
+                </div>
+                <h1 id="shopName" class="text-2xl font-bold text-white mt-4 uppercase">...</h1>
+                
+                <div id="inviteCodeContainer" class="hidden flex items-center bg-[#1a1a1a] px-4 py-1.5 rounded-full mt-2 border border-gray-800 cursor-pointer hover:bg-gray-800 transition" onclick="copyCode()">
+                    <span id="inviteCode" class="text-gold font-bold text-xs tracking-wider mr-2">CODE</span>
+                    <i class="fa-solid fa-copy text-gold text-xs"></i>
+                </div>
+            </div>
+
+            <div class="bg-[#1E1E1E] rounded-t-3xl min-h-full p-6 shadow-[0_-10px_40px_rgba(0,0,0,0.8)]">
+                
+                <div class="flex justify-center space-x-4 mb-6 text-xs font-bold">
+                    <button onclick="setPeriod('day')" id="filterDay" class="text-white border-b-2 border-gold pb-1">HOY</button>
+                    <button onclick="setPeriod('week')" id="filterWeek" class="text-gray-500 hover:text-white transition">SEMANA</button>
+                    <button onclick="setPeriod('month')" id="filterMonth" class="text-gray-500 hover:text-white transition">MES</button>
+                </div>
+
+                <div class="flex space-x-3 mb-8">
+                    <div class="flex-1 bg-[#2C2C2E] rounded-xl p-3 flex flex-col items-center justify-center border border-gray-700">
+                        <span id="statEarnings" class="text-[#2ecc71] text-lg font-bold">$0</span>
+                        <span class="text-gray-500 text-[10px] uppercase">Ganancias</span>
+                    </div>
+                    <div class="flex-1 bg-[#2C2C2E] rounded-xl p-3 flex flex-col items-center justify-center border border-gray-700">
+                        <span id="statCuts" class="text-green-app text-lg font-bold">0</span>
+                        <span class="text-gray-500 text-[10px] uppercase">Cortes</span>
+                    </div>
+                    <div class="flex-1 bg-[#2C2C2E] rounded-xl p-3 flex flex-col items-center justify-center border border-gray-700">
+                        <span id="statTeam" class="text-gold text-lg font-bold">0</span>
+                        <span class="text-gray-500 text-[10px] uppercase">Equipo</span>
+                    </div>
+                </div>
+
+                <h3 class="text-white font-bold text-sm tracking-wider mb-4 border-l-4 border-gold pl-3">RANKING</h3>
+                <div id="rankingList" class="space-y-3">
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 1. CONFIGURACIÓN SUPABASE (Tus credenciales reales)
+        const SUPABASE_URL = "https://bhdmxljthtfomiwgenvf.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJoZG14bGp0aHRmb21pd2dlbnZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3ODQ0MzYsImV4cCI6MjA4MTM2MDQzNn0.sgVh45Pb_6C500BtBfkivVRZM2cNLMBgvaPw5thGZHs";
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Estado Global
+        let currentUser = null;
+        let currentShopId = null;
+        let currentRole = null;
+        let currentPeriod = 'day'; // day, week, month
+
+        // --- FUNCIONES DE UTILIDAD ---
+        const $ = (id) => document.getElementById(id);
+        const show = (id) => $(id).classList.remove('hidden');
+        const hide = (id) => $(id).classList.add('hidden');
+        
+        function togglePass() {
+            const input = $('loginPass');
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+
+        // --- LÓGICA DE LOGIN ---
+        async function doLogin() {
+            const phoneRaw = $('loginPhone').value.trim();
+            const pass = $('loginPass').value.trim();
+
+            if (!phoneRaw || !pass) return alert("Completa todos los campos");
+
+            // Normalizar teléfono (quitar +53 si lo ponen)
+            let phone = phoneRaw.replace(/[^0-9]/g, '');
+            if (phone.startsWith('53') && phone.length === 10) phone = phone.substring(2);
+
+            show('globalLoader');
+
+            try {
+                // 1. Buscar usuario (Réplica exacta de tu LoginActivity)
+                const { data: users, error } = await supabase
+                    .from('barberos')
+                    .select('*')
+                    .eq('telefono', phone);
+
+                if (error) throw error;
+                if (!users || users.length === 0) throw new Error("Número no registrado");
+
+                const user = users[0];
+
+                // 2. Validar
+                if (user.node_restricted) throw new Error("Cuenta restringida");
+                if (user.clave !== pass) throw new Error("Contraseña incorrecta");
+
+                // 3. Éxito
+                currentUser = user;
+                localStorage.setItem('barber_user', JSON.stringify(user));
+                loadDashboard();
+
+            } catch (err) {
+                alert(err.message);
+                hide('globalLoader');
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('barber_user');
+            window.location.reload();
+        }
+
+        // --- DASHBOARD ---
+        async function loadDashboard() {
+            // Si ya hay usuario guardado, usarlo
+            if (!currentUser) {
+                const saved = localStorage.getItem('barber_user');
+                if (saved) currentUser = JSON.parse(saved);
+                else return; // Quedarse en login
+            }
+
+            hide('loginView');
+            show('dashboardView');
+            show('globalLoader');
+
+            // Actualizar datos frescos del usuario para ver si cambió de barbería
+            const { data: freshUser } = await supabase.from('barberos').select('*').eq('id', currentUser.id).single();
+            if(freshUser) currentUser = freshUser;
+
+            currentShopId = currentUser.barberia_id;
+            currentRole = currentUser.rol;
+
+            if (!currentShopId) {
+                alert("No perteneces a ninguna barbería. Usa la App Android para crear o unirte a una.");
+                logout();
+                return;
+            }
+
+            try {
+                // 1. Cargar Info Barbería
+                const { data: shop } = await supabase.from('barberias').select('*').eq('id', currentShopId).single();
+                
+                $('shopName').innerText = shop.nombre;
+                $('inviteCode').innerText = shop.codigo_invitacion;
+                if(shop.foto_url) $('shopLogo').src = shop.foto_url;
+                
+                if (currentRole === 'admin') show('inviteCodeContainer');
+
+                // 2. Cargar Finanzas
+                await fetchFinancialData();
+
+            } catch (e) {
+                console.error(e);
+                alert("Error cargando datos");
+            } finally {
+                hide('globalLoader');
+            }
+        }
+
+        // --- FINANZAS Y RANKING (El cerebro de la app) ---
+        async function fetchFinancialData() {
+            // Configurar filtros de fecha
+            const now = new Date();
+            let dateFilter = now.toISOString().split('T')[0]; // YYYY-MM-DD
+            let operator = 'eq'; // Por defecto "igual a hoy"
+
+            if (currentPeriod === 'week') {
+                const firstDay = new Date(now.setDate(now.getDate() - now.getDay() + 1)); // Lunes
+                dateFilter = firstDay.toISOString().split('T')[0];
+                operator = 'gte';
+            } else if (currentPeriod === 'month') {
+                const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+                dateFilter = firstDay.toISOString().split('T')[0];
+                operator = 'gte';
+            }
+
+            // 1. Obtener Turnos (Dinero en vivo)
+            // IMPORTANTE: En tu DB 'precio' es texto, hay que parsearlo
+            const { data: turnos } = await supabase
+                .from('turnos')
+                .select('barbero_id, precio, fecha')
+                .eq('barberia_id', currentShopId)
+                [operator]('fecha', dateFilter);
+
+            // 2. Obtener Extras
+            const { data: extras } = await supabase
+                .from('ingresos_extra')
+                .select('barbero_id, precio, fecha')
+                .eq('barberia_id', currentShopId)
+                [operator]('fecha', dateFilter);
+
+            // 3. Obtener Cache (Datos antiguos o consolidados)
+            const { data: cache } = await supabase
+                .from('sys_cache_v4')
+                .select('barbero_tlf, total_dinero, total_turnos, tipo_registro, fecha')
+                .eq('barberia_id', currentShopId)
+                [operator]('fecha', dateFilter);
+
+            // 4. Obtener Equipo
+            const { data: team } = await supabase
+                .from('barberos')
+                .select('id, nombre, rol, telefono, foto_url')
+                .eq('barberia_id', currentShopId);
+
+            $('statTeam').innerText = team.length;
+
+            // --- PROCESAMIENTO ---
+            let mapEarnings = {};
+            let mapCuts = {};
+            let totalShopMoney = 0;
+            let totalShopCuts = 0;
+
+            // Mapeo Teléfono -> ID (para el cache)
+            let phoneToId = {};
+            team.forEach(m => phoneToId[m.telefono] = m.id);
+
+            // A) Procesar Turnos
+            turnos.forEach(t => {
+                let val = parseFloat(t.precio) || 0; // Convertir TEXT a FLOAT
+                mapEarnings[t.barbero_id] = (mapEarnings[t.barbero_id] || 0) + val;
+                mapCuts[t.barbero_id] = (mapCuts[t.barbero_id] || 0) + 1;
+                totalShopMoney += val;
+                totalShopCuts++;
+            });
+
+            // B) Procesar Extras
+            extras.forEach(e => {
+                let val = e.precio; // Numeric en DB
+                mapEarnings[e.barbero_id] = (mapEarnings[e.barbero_id] || 0) + val;
+                totalShopMoney += val;
+            });
+
+            // C) Procesar Cache
+            cache.forEach(c => {
+                if (c.tipo_registro === 'salon') {
+                    totalShopMoney += c.total_dinero;
+                    totalShopCuts += c.total_turnos;
+                } else {
+                    let realId = phoneToId[c.barbero_tlf] || c.barbero_tlf;
+                    mapEarnings[realId] = (mapEarnings[realId] || 0) + c.total_dinero;
+                    mapCuts[realId] = (mapCuts[realId] || 0) + c.total_turnos;
+                }
+            });
+
+            // Actualizar UI Totales
+            $('statEarnings').innerText = `$${Math.floor(totalShopMoney)}`;
+            $('statCuts').innerText = totalShopCuts;
+
+            // --- RANKING ---
+            // Ordenar equipo por dinero descendente
+            team.sort((a, b) => {
+                let moneyA = mapEarnings[a.id] || 0;
+                let moneyB = mapEarnings[b.id] || 0;
+                return moneyB - moneyA;
+            });
+
+            const listContainer = $('rankingList');
+            listContainer.innerHTML = '';
+
+            team.forEach((member, index) => {
+                let money = Math.floor(mapEarnings[member.id] || 0);
+                let cuts = mapCuts[member.id] || 0;
+                let rankColor = index === 0 ? 'bg-[#FFD700] text-black' : 
+                                index === 1 ? 'bg-gray-300 text-black' : 
+                                index === 2 ? 'bg-[#cd7f32] text-black' : 'bg-gray-700 text-white';
+
+                // Mostrar dinero solo si soy yo o soy admin
+                let showMoney = (currentRole === 'admin' || member.id === currentUser.id) ? `$${money}` : '---';
+
+                let html = `
+                    <div class="flex items-center bg-[#2C2C2E] p-3 rounded-lg border border-gray-800">
+                        <div class="w-8 h-8 rounded-full ${rankColor} flex items-center justify-center font-bold text-sm mr-3">
+                            ${index + 1}
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="text-white font-bold text-sm">${member.nombre || 'Sin nombre'}</h4>
+                            <p class="text-gray-500 text-xs uppercase">${member.rol}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[#2ecc71] font-bold text-sm">${showMoney}</p>
+                            <p class="text-gray-500 text-[10px]">${cuts} Cortes</p>
+                        </div>
+                    </div>
+                `;
+                listContainer.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        // --- FILTROS ---
+        function setPeriod(p) {
+            currentPeriod = p;
+            // Estilos botones
+            ['Day', 'Week', 'Month'].forEach(t => {
+                let btn = $(`filter${t}`);
+                if (t.toLowerCase() === p) {
+                    btn.className = "text-white border-b-2 border-gold pb-1";
+                } else {
+                    btn.className = "text-gray-500 hover:text-white transition";
+                }
+            });
+            show('globalLoader');
+            fetchFinancialData().then(() => hide('globalLoader'));
+        }
+
+        function copyCode() {
+            const code = $('inviteCode').innerText;
+            navigator.clipboard.writeText(code);
+            alert("Código copiado: " + code);
+        }
+
+        // Init
+        window.onload = () => {
+            if(localStorage.getItem('barber_user')) loadDashboard();
+        };
+
+    </script>
+</body>
+</html>
