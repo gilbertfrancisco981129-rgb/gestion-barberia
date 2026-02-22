@@ -2,218 +2,507 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Barber Master - Gestión</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Barber Master Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
     <style>
-        body { background-color: #121212; color: white; font-family: sans-serif; }
-        .bg-ultra-depth { background: radial-gradient(circle at top left, #1a1a1a, #000000); }
-        .text-gold { color: #FFD700; }
-        .bg-gold { background-color: #FFD700; }
-        .input-pro { background: rgba(30, 30, 30, 0.8); border: 1px solid #333; color: white; }
-        .loader { border-top-color: #D50000; -webkit-animation: spinner 1.5s linear infinite; animation: spinner 1.5s linear infinite; }
-        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        /* ESTILOS EXACTOS DE TU APP */
+        body { background-color: #000; color: white; font-family: system-ui, -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
+        .bg-app { background: radial-gradient(circle at top left, #1a1a1a, #000000); }
+        
+        /* Colores */
+        .text-gold { color: #FFD700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.3); }
+        .border-gold { border-color: #FFD700; }
+        .bg-gold { background: linear-gradient(45deg, #FFD700, #FDB931); color: black; }
+        
+        .text-silver { color: #C0C0C0; text-shadow: 0 0 10px rgba(192, 192, 192, 0.3); }
+        .border-silver { border-color: #C0C0C0; }
+        .bg-silver { background: linear-gradient(45deg, #E0E0E0, #B0B0B0); color: black; }
+        
+        .text-bronze { color: #CD7F32; text-shadow: 0 0 10px rgba(205, 127, 50, 0.3); }
+        .border-bronze { border-color: #CD7F32; }
+        .bg-bronze { background: linear-gradient(45deg, #CD7F32, #8B4513); color: white; }
+
+        .input-dark { background: #1E1E1E; border: 1px solid #333; color: white; outline: none; transition: 0.3s; }
+        .input-dark:focus { border-color: #D50000; }
+        
+        /* Loader */
+        .loader { width: 40px; height: 40px; border: 4px solid #333; border-top: 4px solid #D50000; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Modal Transitions */
+        .modal { transition: transform 0.3s ease-in-out, opacity 0.3s; transform: scale(0.95); opacity: 0; pointer-events: none; }
+        .modal.active { transform: scale(1); opacity: 1; pointer-events: auto; }
+        
+        /* Grid Catalogo */
+        .catalog-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .catalog-item { aspect-ratio: 1; position: relative; border-radius: 8px; overflow: hidden; background: #222; }
     </style>
 </head>
-<body class="bg-ultra-depth min-h-screen flex flex-col items-center justify-center relative">
+<body class="bg-app min-h-screen">
 
-    <div id="globalLoader" class="fixed inset-0 bg-black z-50 flex flex-col items-center justify-center hidden">
-        <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mb-4"></div>
-        <h2 class="text-white">Cargando...</h2>
+    <div id="loader" class="fixed inset-0 bg-black z-[100] flex flex-col items-center justify-center hidden">
+        <div class="loader mb-4"></div>
+        <p class="text-xs tracking-widest text-gray-400">CARGANDO...</p>
     </div>
 
-    <div id="loginView" class="w-full max-w-md p-6">
-        <div class="text-center mb-10">
-            <h1 class="text-3xl font-bold tracking-widest text-white">BARBER MASTER</h1>
+    <div id="viewLogin" class="min-h-screen flex flex-col items-center justify-center p-6">
+        <div class="w-24 h-24 bg-red-900/20 rounded-full flex items-center justify-center mb-6 border border-red-900/40">
+            <i class="fa-solid fa-cut text-4xl text-white"></i>
         </div>
+        <h1 class="text-3xl font-bold tracking-widest mb-1">BARBER MASTER</h1>
+        <p class="text-gray-500 text-sm mb-10">Web Management Portal</p>
 
-        <div class="bg-[#1e1e1e] rounded-2xl p-6 shadow-2xl border border-gray-800">
-            <div class="space-y-4">
-                <input type="tel" id="loginPhone" placeholder="Teléfono (Ej: 5xxxxxxx)" 
-                    class="input-pro w-full px-4 py-3 rounded-lg focus:outline-none focus:border-red-500">
-                
-                <input type="password" id="loginPass" placeholder="Contraseña" 
-                    class="input-pro w-full px-4 py-3 rounded-lg focus:outline-none focus:border-red-500">
-                
-                <button onclick="doLogin()" class="w-full bg-[#D50000] text-white font-bold py-3 rounded-lg mt-4">
-                    ACCEDER AHORA
-                </button>
-            </div>
+        <div class="w-full max-w-sm space-y-4">
+            <input type="tel" id="txtPhone" placeholder="Teléfono" class="input-dark w-full p-4 rounded-xl">
+            <input type="password" id="txtPass" placeholder="Contraseña" class="input-dark w-full p-4 rounded-xl">
+            <button onclick="login()" class="w-full bg-[#D50000] text-white font-bold p-4 rounded-xl shadow-lg shadow-red-900/30 active:scale-95 transition">
+                INGRESAR
+            </button>
         </div>
-        <p class="text-center text-gray-500 text-xs mt-8" id="versionText">v1.1 Web</p>
     </div>
 
-    <div id="dashboardView" class="w-full max-w-md h-screen flex flex-col hidden bg-black">
-        <div class="flex items-center justify-between p-5 bg-[#1a1a1a]">
-            <button onclick="logout()" class="text-gray-400"><i class="fa-solid fa-right-from-bracket"></i></button>
-            <h2 class="text-xl font-bold text-white">NEGOCIO</h2>
-            <div class="w-8"></div>
+    <div id="viewDashboard" class="hidden min-h-screen pb-20">
+        <div class="p-6 flex justify-between items-center bg-gradient-to-b from-[#1a1a1a] to-transparent">
+            <div>
+                <h2 class="text-gray-400 text-xs tracking-widest">BIENVENIDO</h2>
+                <h1 id="lblShopName" class="text-xl font-bold uppercase truncate max-w-[200px]">...</h1>
+            </div>
+            
+            <div class="relative w-12 h-12" onclick="openSettings()">
+                <img id="imgAvatar" src="https://via.placeholder.com/100" class="w-full h-full rounded-full object-cover border-2 border-gray-700">
+                <div class="absolute bottom-0 right-0 bg-blue-500 w-4 h-4 rounded-full flex items-center justify-center border border-black">
+                    <i class="fa-solid fa-gear text-[8px]"></i>
+                </div>
+            </div>
         </div>
 
-        <div class="flex-1 overflow-y-auto p-4 pb-20">
-            <div class="text-center mb-6">
-                <h1 id="shopName" class="text-2xl font-bold text-white uppercase">...</h1>
-                <div id="inviteCodeContainer" class="hidden mt-2">
-                    <span id="inviteCode" class="text-gold font-bold text-sm bg-gray-800 px-3 py-1 rounded-full"></span>
+        <div class="px-6 mb-8">
+            <div onclick="openStory()" class="bg-[#1E1E1E] rounded-2xl p-4 flex items-center justify-between border border-gray-800 active:bg-gray-800 transition">
+                <div class="flex items-center gap-4">
+                    <div class="w-14 h-14 rounded-full border-2 border-[#D50000] p-1">
+                        <img id="imgStoryPreview" src="https://via.placeholder.com/100" class="w-full h-full rounded-full object-cover bg-gray-800">
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-sm">Historia del Salón</h3>
+                        <p id="lblStoryTime" class="text-xs text-gray-500">Toque para ver o subir</p>
+                    </div>
                 </div>
+                <i class="fa-solid fa-camera text-gray-500"></i>
+            </div>
+        </div>
+
+        <div class="px-6 grid grid-cols-2 gap-3 mb-8">
+            <div class="bg-[#1E1E1E] p-4 rounded-2xl border border-gray-800 text-center">
+                <p class="text-[#2ecc71] text-xl font-bold" id="lblEarnings">$0</p>
+                <p class="text-[10px] text-gray-500 uppercase tracking-wider">Ganancias Hoy</p>
+            </div>
+            <div class="bg-[#1E1E1E] p-4 rounded-2xl border border-gray-800 text-center">
+                <p class="text-[#00D4AA] text-xl font-bold" id="lblCuts">0</p>
+                <p class="text-[10px] text-gray-500 uppercase tracking-wider">Cortes Hoy</p>
+            </div>
+        </div>
+
+        <div class="px-6 mb-6">
+            <button onclick="openCatalog()" class="w-full bg-[#1E1E1E] border border-gray-700 p-4 rounded-xl flex items-center justify-center gap-2 active:bg-gray-800">
+                <i class="fa-solid fa-images text-blue-400"></i>
+                <span class="font-bold text-sm">GESTIONAR CATÁLOGO</span>
+            </button>
+        </div>
+
+        <div class="px-6">
+            <h3 class="text-xs font-bold text-gray-500 mb-4 tracking-widest">RANKING DEL EQUIPO</h3>
+            <div id="listRanking" class="space-y-3">
+                </div>
+        </div>
+    </div>
+
+    <div id="modalCatalog" class="fixed inset-0 bg-black z-50 hidden flex flex-col">
+        <div class="p-4 flex items-center justify-between bg-[#111]">
+            <button onclick="closeModal('modalCatalog')" class="w-10 h-10 flex items-center justify-center"><i class="fa-solid fa-arrow-left"></i></button>
+            <h2 class="font-bold">CATÁLOGO</h2>
+            <div class="w-10"></div>
+        </div>
+        <div class="flex-1 overflow-y-auto p-4">
+            <div id="gridCatalog" class="catalog-grid">
+                </div>
+        </div>
+        <div class="p-6 bg-black">
+            <button onclick="clickUpload('fileCatalog')" class="w-full bg-[#2ecc71] text-black font-bold p-4 rounded-xl">
+                <i class="fa-solid fa-plus mr-2"></i> AGREGAR FOTO
+            </button>
+            <input type="file" id="fileCatalog" accept="image/*" class="hidden" onchange="uploadCatalogPhoto(this)">
+        </div>
+    </div>
+
+    <div id="modalStory" class="fixed inset-0 bg-black z-50 hidden flex flex-col items-center justify-center">
+        <button onclick="closeModal('modalStory')" class="absolute top-4 right-4 z-20 w-10 h-10 bg-black/50 rounded-full text-white"><i class="fa-solid fa-xmark"></i></button>
+        
+        <div id="storyContent" class="w-full h-full flex flex-col items-center justify-center hidden">
+            <img id="imgStoryFull" class="max-h-full max-w-full object-contain">
+            <button onclick="deleteStory()" class="absolute bottom-10 bg-red-600 px-6 py-2 rounded-full font-bold shadow-xl">
+                <i class="fa-solid fa-trash mr-2"></i> ELIMINAR
+            </button>
+        </div>
+
+        <div id="storyEmpty" class="text-center">
+            <div class="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fa-solid fa-camera text-2xl text-gray-500"></i>
+            </div>
+            <h2 class="text-xl font-bold mb-2">Sin Historia Activa</h2>
+            <p class="text-gray-500 text-sm mb-6">Sube una foto para mostrar tu trabajo 24h.</p>
+            <button onclick="clickUpload('fileStory')" class="bg-blue-600 px-8 py-3 rounded-xl font-bold">SUBIR AHORA</button>
+            <input type="file" id="fileStory" accept="image/*" class="hidden" onchange="uploadStory(this)">
+        </div>
+    </div>
+
+    <div id="modalSettings" class="fixed inset-0 bg-black/90 z-50 hidden flex items-end justify-center">
+        <div class="bg-[#1E1E1E] w-full max-w-md rounded-t-3xl p-6 animate-slide-up">
+            <h2 class="text-center font-bold mb-6">EDITAR PERFIL</h2>
+            
+            <div class="flex flex-col items-center mb-6">
+                <div class="w-24 h-24 rounded-full overflow-hidden border-4 border-[#333] mb-4 relative">
+                    <img id="imgAvatarEdit" src="" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+                        <i class="fa-solid fa-camera"></i>
+                    </div>
+                    <input type="file" class="absolute inset-0 opacity-0" accept="image/*" onchange="uploadAvatar(this)">
+                </div>
+                <p class="text-xs text-gray-500">Toca para cambiar foto</p>
             </div>
 
-            <div class="flex space-x-2 mb-6">
-                <div class="flex-1 bg-[#2C2C2E] rounded-xl p-3 text-center border border-gray-700">
-                    <span id="statEarnings" class="block text-[#2ecc71] text-lg font-bold">$0</span>
-                    <span class="text-gray-500 text-[10px]">GANANCIAS</span>
-                </div>
-                <div class="flex-1 bg-[#2C2C2E] rounded-xl p-3 text-center border border-gray-700">
-                    <span id="statCuts" class="block text-[#00D4AA] text-lg font-bold">0</span>
-                    <span class="text-gray-500 text-[10px]">CORTES</span>
-                </div>
-            </div>
-
-            <h3 class="text-white font-bold text-sm mb-4 border-l-4 border-gold pl-3">RANKING</h3>
-            <div id="rankingList" class="space-y-3"></div>
+            <button onclick="closeModal('modalSettings')" class="w-full bg-gray-700 p-4 rounded-xl font-bold mb-2">CERRAR</button>
+            <button onclick="logout()" class="w-full text-red-500 p-4 font-bold text-sm">CERRAR SESIÓN</button>
         </div>
     </div>
 
     <script>
-        // --- CONFIGURACIÓN ---
         const SUPABASE_URL = "https://bhdmxljthtfomiwgenvf.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJoZG14bGp0aHRmb21pd2dlbnZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3ODQ0MzYsImV4cCI6MjA4MTM2MDQzNn0.sgVh45Pb_6C500BtBfkivVRZM2cNLMBgvaPw5thGZHs";
-        
-        // CORRECCIÓN: Usamos un nombre distinto para el cliente
-        let client = null;
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        try {
-            client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-            console.log("Supabase iniciado correctamente");
-        } catch (e) {
-            alert("Error iniciando App: " + e.message);
-        }
+        // Variables Globales
+        let currentUser = null;
+        let currentShop = null;
+        let adminPhone = ""; // Para carpetas de Storage
 
-        // --- FUNCIONES ---
+        // --- INICIO ---
+        window.onload = () => {
+            const saved = localStorage.getItem('barber_user');
+            if(saved) {
+                currentUser = JSON.parse(saved);
+                loadDashboard();
+            }
+        };
+
         const $ = (id) => document.getElementById(id);
+        const clickUpload = (id) => $(id).click();
+        const closeModal = (id) => $(id).classList.add('hidden');
 
-        async function doLogin() {
-            if (!client) return alert("Error crítico: Supabase no cargó.");
-
-            const phoneRaw = $('loginPhone').value.trim();
-            const pass = $('loginPass').value.trim();
-
-            if (!phoneRaw || !pass) return alert("Pon tu teléfono y contraseña");
-
-            let phone = phoneRaw.replace(/[^0-9]/g, '');
-            if (phone.startsWith('53') && phone.length === 10) phone = phone.substring(2);
-
-            $('globalLoader').classList.remove('hidden');
-
+        // --- LOGIN ---
+        async function login() {
+            const phone = $('txtPhone').value.replace(/\D/g, '').replace(/^53/, '');
+            const pass = $('txtPass').value;
+            
+            if(!phone || !pass) return alert("Completa los datos");
+            
+            $('#loader').classList.remove('hidden');
             try {
-                // 1. LOGIN MANUAL (Igual que APK)
-                const { data: users, error } = await client
-                    .from('barberos')
-                    .select('*')
-                    .eq('telefono', phone);
+                const { data, error } = await sb.from('barberos').select('*').eq('telefono', phone).single();
+                if(error || !data) throw "Usuario no encontrado";
+                if(data.clave !== pass) throw "Contraseña incorrecta";
+                if(!data.barberia_id) throw "No tienes barbería asignada";
 
-                if (error) throw error;
-                if (!users || users.length === 0) throw new Error("Número no encontrado");
-
-                const user = users[0];
-                if (user.clave !== pass) throw new Error("Contraseña incorrecta");
-                if (user.node_restricted) throw new Error("Cuenta bloqueada");
-
-                // ÉXITO
-                localStorage.setItem('barber_user', JSON.stringify(user));
-                loadDashboard(user);
-
-            } catch (err) {
-                alert("Error: " + err.message);
-                $('globalLoader').classList.add('hidden');
+                currentUser = data;
+                localStorage.setItem('barber_user', JSON.stringify(data));
+                loadDashboard();
+            } catch(e) {
+                alert(e.message || e);
+                $('#loader').classList.add('hidden');
             }
         }
 
-        async function loadDashboard(user) {
-            $('loginView').classList.add('hidden');
-            $('dashboardView').classList.remove('hidden');
-            $('globalLoader').classList.remove('hidden');
-
-            if (!user.barberia_id) {
-                alert("No tienes barbería asignada.");
-                return logout();
-            }
+        // --- DASHBOARD LOADER ---
+        async function loadDashboard() {
+            $('viewLogin').classList.add('hidden');
+            $('viewDashboard').classList.remove('hidden');
+            $('#loader').classList.remove('hidden');
 
             try {
-                // INFO TIENDA
-                const { data: shop } = await client.from('barberias').select('*').eq('id', user.barberia_id).single();
-                $('shopName').innerText = shop.nombre;
-                if (user.rol === 'admin') {
-                    $('inviteCodeContainer').classList.remove('hidden');
-                    $('inviteCode').innerText = shop.codigo_invitacion;
+                // 1. Info Barbería
+                const { data: shop } = await sb.from('barberias').select('*').eq('id', currentUser.barberia_id).single();
+                currentShop = shop;
+                adminPhone = shop.telefono_admin || currentUser.telefono; // Para carpetas
+
+                $('lblShopName').innerText = shop.nombre;
+                $('imgAvatar').src = shop.foto_url || 'https://via.placeholder.com/100';
+                $('imgAvatarEdit').src = shop.foto_url || 'https://via.placeholder.com/100';
+
+                // 2. Historia Preview
+                if(shop.tiene_historia && shop.historia_url) {
+                    // Verificar 24h
+                    const diff = Date.now() - (shop.historia_timestamp || 0);
+                    if(diff < 86400000) { // 24h
+                        $('imgStoryPreview').src = shop.historia_url;
+                        $('imgStoryPreview').classList.remove('opacity-50');
+                        $('lblStoryTime').innerText = "Historia activa";
+                        $('lblStoryTime').classList.add('text-green-500');
+                    } else {
+                        // Expirada
+                        resetStoryUI();
+                    }
+                } else {
+                    resetStoryUI();
                 }
 
-                // DATOS FINANCIEROS (Día actual por defecto)
-                const today = new Date().toISOString().split('T')[0];
-                
-                const { data: turnos } = await client.from('turnos')
-                    .select('barbero_id, precio').eq('barberia_id', user.barberia_id).eq('fecha', today);
-                
-                const { data: extras } = await client.from('ingresos_extra')
-                    .select('barbero_id, precio').eq('barberia_id', user.barberia_id).eq('fecha', today);
+                // 3. Ranking y Dinero
+                await loadRankingAndMoney();
 
-                const { data: team } = await client.from('barberos')
-                    .select('id, nombre, rol').eq('barberia_id', user.barberia_id);
-
-                // CÁLCULOS
-                let mapMoney = {};
-                let mapCuts = {};
-                let totalMoney = 0;
-                let totalCuts = 0;
-
-                if(turnos) turnos.forEach(t => {
-                    let val = parseFloat(t.precio) || 0;
-                    mapMoney[t.barbero_id] = (mapMoney[t.barbero_id] || 0) + val;
-                    mapCuts[t.barbero_id] = (mapCuts[t.barbero_id] || 0) + 1;
-                    totalMoney += val;
-                    totalCuts++;
-                });
-
-                if(extras) extras.forEach(e => {
-                    let val = parseFloat(e.precio) || 0;
-                    mapMoney[e.barbero_id] = (mapMoney[e.barbero_id] || 0) + val;
-                    totalMoney += val;
-                });
-
-                $('statEarnings').innerText = "$" + Math.floor(totalMoney);
-                $('statCuts').innerText = totalCuts;
-
-                // RANKING
-                team.sort((a, b) => (mapMoney[b.id] || 0) - (mapMoney[a.id] || 0));
-                
-                const list = $('rankingList');
-                list.innerHTML = '';
-                
-                team.forEach((m, i) => {
-                    let money = Math.floor(mapMoney[m.id] || 0);
-                    let cuts = mapCuts[m.id] || 0;
-                    let color = i===0 ? 'text-gold' : 'text-white';
-                    let bg = i===0 ? 'border-gold' : 'border-gray-800';
-
-                    let html = `
-                        <div class="flex items-center bg-[#2C2C2E] p-3 rounded-lg border ${bg}">
-                            <div class="w-6 font-bold text-gray-500">#${i+1}</div>
-                            <div class="flex-1">
-                                <div class="font-bold ${color}">${m.nombre}</div>
-                                <div class="text-xs text-gray-500">${cuts} cortes</div>
-                            </div>
-                            <div class="font-bold text-[#2ecc71]">$${money}</div>
-                        </div>`;
-                    list.insertAdjacentHTML('beforeend', html);
-                });
-
-            } catch (e) {
+            } catch(e) {
                 console.error(e);
             }
-            $('globalLoader').classList.add('hidden');
+            $('#loader').classList.add('hidden');
+        }
+
+        function resetStoryUI() {
+            $('imgStoryPreview').src = 'https://via.placeholder.com/100';
+            $('imgStoryPreview').classList.add('opacity-50');
+            $('lblStoryTime').innerText = "Toque para subir";
+            $('lblStoryTime').classList.remove('text-green-500');
+        }
+
+        async function loadRankingAndMoney() {
+            const today = new Date().toISOString().split('T')[0];
+            
+            // Traer datos
+            const { data: turnos } = await sb.from('turnos').select('*').eq('barberia_id', currentShop.id).eq('fecha', today);
+            const { data: team } = await sb.from('barberos').select('*').eq('barberia_id', currentShop.id);
+
+            let mapMoney = {};
+            let mapCuts = {};
+            let totalShop = 0;
+            let totalCuts = 0;
+
+            if(turnos) turnos.forEach(t => {
+                let val = parseFloat(t.precio) || 0;
+                mapMoney[t.barbero_id] = (mapMoney[t.barbero_id] || 0) + val;
+                mapCuts[t.barbero_id] = (mapCuts[t.barbero_id] || 0) + 1;
+                totalShop += val;
+                totalCuts++;
+            });
+
+            $('lblEarnings').innerText = `$${totalShop}`;
+            $('lblCuts').innerText = totalCuts;
+
+            // Ordenar Ranking
+            team.sort((a, b) => (mapMoney[b.id] || 0) - (mapMoney[a.id] || 0));
+
+            const list = $('listRanking');
+            list.innerHTML = '';
+
+            team.forEach((m, i) => {
+                let money = Math.floor(mapMoney[m.id] || 0);
+                let cuts = mapCuts[m.id] || 0;
+                
+                // Estilos Oro/Plata/Bronce (Igual a Java)
+                let rankClass = "bg-[#2C2C2E] border-gray-800 text-white";
+                let badgeClass = "bg-gray-700 text-white";
+                let icon = "";
+
+                if(i === 0) { // ORO
+                    rankClass = "bg-[#2C2C2E] border-gold"; 
+                    badgeClass = "bg-gold text-black shadow-[0_0_10px_#FFD700]";
+                    icon = '<i class="fa-solid fa-crown text-yellow-900 ml-1"></i>';
+                } else if(i === 1) { // PLATA
+                    rankClass = "bg-[#2C2C2E] border-silver";
+                    badgeClass = "bg-silver text-black";
+                } else if(i === 2) { // BRONCE
+                    rankClass = "bg-[#2C2C2E] border-bronze";
+                    badgeClass = "bg-bronze text-white";
+                }
+
+                let html = `
+                <div class="flex items-center p-3 rounded-xl border-2 ${rankClass} relative overflow-hidden">
+                    <div class="w-8 h-8 rounded-full ${badgeClass} flex items-center justify-center font-bold text-sm mr-3 z-10">
+                        ${i+1}${icon}
+                    </div>
+                    <div class="flex-1 z-10">
+                        <h4 class="font-bold text-sm">${m.nombre}</h4>
+                        <p class="text-xs text-gray-500">${cuts} cortes hoy</p>
+                    </div>
+                    <div class="z-10 text-right">
+                        <p class="font-bold text-[#2ecc71]">$${money}</p>
+                    </div>
+                </div>`;
+                list.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        // --- CATALOGO ---
+        function openCatalog() {
+            $('modalCatalog').classList.remove('hidden');
+            renderCatalogGrid();
+        }
+
+        function renderCatalogGrid() {
+            const grid = $('gridCatalog');
+            grid.innerHTML = '';
+            
+            // currentShop.catalogo es un Array de strings (nombres de archivo)
+            let photos = currentShop.catalogo || [];
+
+            photos.forEach(fileName => {
+                // Construir URL pública
+                let url = `${SUPABASE_URL}/storage/v1/object/public/catalogo/${cleanPhone(adminPhone)}/${fileName}`;
+                
+                let html = `
+                <div class="catalog-item group">
+                    <img src="${url}" class="w-full h-full object-cover">
+                    <button onclick="deleteCatalogPhoto('${fileName}')" class="absolute top-2 right-2 bg-red-600 text-white w-8 h-8 rounded-full flex items-center justify-center opacity-80 hover:opacity-100 shadow-md">
+                        <i class="fa-solid fa-trash text-xs"></i>
+                    </button>
+                </div>`;
+                grid.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        async function uploadCatalogPhoto(input) {
+            if(!input.files || !input.files[0]) return;
+            const file = input.files[0];
+            
+            $('#loader').classList.remove('hidden');
+            try {
+                // 1. Subir a Storage
+                const fileName = `cat_${Date.now()}.jpg`;
+                const path = `${cleanPhone(adminPhone)}/${fileName}`;
+                
+                const { error: upErr } = await sb.storage.from('catalogo').upload(path, file);
+                if(upErr) throw upErr;
+
+                // 2. Actualizar Array en DB
+                let currentArr = currentShop.catalogo || [];
+                currentArr.push(fileName); // Añadir nuevo
+
+                const { error: dbErr } = await sb.from('barberias')
+                    .update({ catalogo: currentArr })
+                    .eq('id', currentShop.id);
+
+                if(dbErr) throw dbErr;
+
+                // 3. Recargar
+                currentShop.catalogo = currentArr; // Actualizar local
+                renderCatalogGrid();
+                alert("Foto agregada");
+                
+            } catch(e) {
+                alert("Error al subir: " + e.message);
+            }
+            $('#loader').classList.add('hidden');
+            input.value = ""; // Reset
+        }
+
+        async function deleteCatalogPhoto(fileName) {
+            if(!confirm("¿Borrar esta foto?")) return;
+            $('#loader').classList.remove('hidden');
+            
+            try {
+                // 1. Borrar de Storage
+                const path = `${cleanPhone(adminPhone)}/${fileName}`;
+                await sb.storage.from('catalogo').remove([path]);
+
+                // 2. Borrar de DB
+                let newArr = (currentShop.catalogo || []).filter(f => f !== fileName);
+                
+                await sb.from('barberias').update({ catalogo: newArr }).eq('id', currentShop.id);
+                
+                currentShop.catalogo = newArr;
+                renderCatalogGrid();
+
+            } catch(e) { alert(e.message); }
+            $('#loader').classList.add('hidden');
+        }
+
+        // --- HISTORIA ---
+        function openStory() {
+            $('modalStory').classList.remove('hidden');
+            const hasStory = currentShop.tiene_historia && ((Date.now() - currentShop.historia_timestamp) < 86400000);
+            
+            if(hasStory) {
+                $('storyContent').classList.remove('hidden');
+                $('storyEmpty').classList.add('hidden');
+                $('imgStoryFull').src = currentShop.historia_url;
+            } else {
+                $('storyContent').classList.add('hidden');
+                $('storyEmpty').classList.remove('hidden');
+            }
+        }
+
+        async function uploadStory(input) {
+            if(!input.files[0]) return;
+            $('#loader').classList.remove('hidden');
+            try {
+                const file = input.files[0];
+                const fileName = `story_${currentShop.id}_${Date.now()}.jpg`;
+                
+                // Subir
+                const { data, error } = await sb.storage.from('stories').upload(fileName, file);
+                if(error) throw error;
+
+                const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/stories/${fileName}`;
+
+                // Actualizar DB
+                await sb.from('barberias').update({
+                    tiene_historia: true,
+                    historia_url: publicUrl,
+                    historia_timestamp: Date.now()
+                }).eq('id', currentShop.id);
+
+                // Recargar dashboard para ver preview
+                location.reload();
+
+            } catch(e) { alert(e.message); }
+        }
+
+        async function deleteStory() {
+            if(!confirm("¿Borrar historia?")) return;
+            $('#loader').classList.remove('hidden');
+            try {
+                // Reset DB
+                await sb.from('barberias').update({
+                    tiene_historia: false,
+                    historia_url: null,
+                    historia_timestamp: 0
+                }).eq('id', currentShop.id);
+                location.reload();
+            } catch(e) { alert(e.message); }
+        }
+
+        // --- AVATAR / SETTINGS ---
+        function openSettings() { $('modalSettings').classList.remove('hidden'); }
+
+        async function uploadAvatar(input) {
+            if(!input.files[0]) return;
+            $('#loader').classList.remove('hidden');
+            try {
+                const file = input.files[0];
+                const fileName = `avatar_${currentShop.id}_${Date.now()}.jpg`;
+                
+                await sb.storage.from('perfiles').upload(`avatars/${fileName}`, file);
+                const url = `${SUPABASE_URL}/storage/v1/object/public/perfiles/avatars/${fileName}`;
+
+                await sb.from('barberias').update({ foto_url: url }).eq('id', currentShop.id);
+                location.reload();
+
+            } catch(e) { alert(e.message); }
+        }
+
+        // --- UTILIDADES ---
+        function cleanPhone(p) {
+            if(!p) return "unknown";
+            return p.replace(/\s+/g, '').replace(/\+/g, '').trim();
         }
 
         function logout() {
@@ -221,9 +510,8 @@
             location.reload();
         }
 
-        // AUTO LOGIN
-        const saved = localStorage.getItem('barber_user');
-        if (saved) loadDashboard(JSON.parse(saved));
+        // Animaciones CSS para modales
+        document.head.insertAdjacentHTML("beforeend", `<style>.animate-slide-up { animation: slideUp 0.3s ease-out; } @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }</style>`)
     </script>
 </body>
 </html>
