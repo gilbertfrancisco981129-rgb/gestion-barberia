@@ -4,62 +4,53 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Barber Master Pro</title>
-    
+    <meta http-equiv="Expires" content="0">
+    <meta http-equiv="Last-Modified" content="0">
+    <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-
     <style>
-        /* ESTILOS NATIVOS */
         body { background-color: #000; color: white; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
-        
-        /* Gradientes Rango */
         .rank-gold { background: linear-gradient(135deg, #FFD700 0%, #FDB931 100%); color: black; box-shadow: 0 0 15px rgba(255, 215, 0, 0.4); border: 2px solid #FFD700; }
         .rank-silver { background: linear-gradient(135deg, #E0E0E0 0%, #B0B0B0 100%); color: black; border: 2px solid #C0C0C0; }
         .rank-bronze { background: linear-gradient(135deg, #CD7F32 0%, #8B4513 100%); color: white; border: 2px solid #CD7F32; }
         .rank-normal { background: #2C2C2E; color: white; border: 1px solid #333; }
-
-        /* Loader */
         .spinner { border: 4px solid rgba(255,255,255,0.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: #D50000; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* Inputs */
         .input-app { width: 100%; background: #1E1E1E; border: 1px solid #333; color: white; padding: 12px; border-radius: 12px; outline: none; transition: 0.3s; }
         .input-app:focus { border-color: #D50000; background: #252525; }
-
-        /* Toggle Switch */
         .toggle-checkbox:checked { right: 0; border-color: #68D391; }
         .toggle-checkbox:checked + .toggle-label { background-color: #68D391; }
+        button { touch-action: manipulation; cursor: pointer; } 
+        .animate-slide-left { animation: slideLeft 0.3s ease-out; }
+        @keyframes slideLeft { from { transform: translateX(100%); } to { transform: translateX(0); } }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
-
     <div id="loader" class="fixed inset-0 bg-black z-[999] flex flex-col items-center justify-center hidden">
         <div class="spinner mb-4"></div>
         <p class="text-xs text-gray-500 tracking-widest animate-pulse">PROCESANDO...</p>
     </div>
-
     <div id="viewLogin" class="flex-1 flex flex-col items-center justify-center p-6 w-full max-w-md mx-auto">
         <div class="w-20 h-20 bg-red-900/20 rounded-full flex items-center justify-center mb-6 border border-red-900/40">
             <i class="fa-solid fa-scissors text-3xl text-white"></i>
         </div>
         <h1 class="text-2xl font-bold tracking-[0.2em] mb-1 text-center">BARBER MASTER</h1>
         <p class="text-gray-500 text-xs mb-10 text-center">ACCESO EXCLUSIVO</p>
-
         <div class="w-full space-y-4">
             <input type="tel" id="loginPhone" placeholder="Teléfono" class="input-app">
             <input type="password" id="loginPass" placeholder="Contraseña" class="input-app">
-            <button onclick="doLogin()" class="w-full bg-[#D50000] text-white font-bold py-4 rounded-xl shadow-lg shadow-red-900/20 active:scale-95 transition">
+            <button type="button" onclick="doLogin()" class="w-full bg-[#D50000] text-white font-bold py-4 rounded-xl shadow-lg shadow-red-900/20 active:scale-95 transition touch-manipulation">
                 INICIAR SESIÓN
             </button>
         </div>
         <p class="mt-8 text-gray-600 text-[10px]">v3.0 Final Release</p>
     </div>
-
     <div id="viewSetup" class="hidden flex-1 flex flex-col p-6 w-full max-w-md mx-auto pt-10">
         <h1 class="text-2xl font-bold mb-2">Bienvenido, <span id="lblSetupName" class="text-[#D50000]">Barbero</span></h1>
-        <p class="text-gray-400 text-sm mb-8">No estás vinculado a ningún negocio. ¿Qué deseas hacer?</p>
-
+        <p class="text-gray-400 text-sm mb-8">No estás vinculado a ningún negocio.</p>
         <div class="bg-[#1E1E1E] p-5 rounded-2xl border border-gray-800 mb-6">
             <div class="flex items-center gap-3 mb-4">
                 <i class="fa-solid fa-shop text-gold"></i>
@@ -70,7 +61,6 @@
                 INICIAR COMO DUEÑO
             </button>
         </div>
-
         <div class="bg-[#1E1E1E] p-5 rounded-2xl border border-gray-800">
             <div class="flex items-center gap-3 mb-4">
                 <i class="fa-solid fa-users text-[#00D4AA]"></i>
@@ -81,28 +71,34 @@
                 INGRESAR
             </button>
         </div>
-        
         <button onclick="logout()" class="mt-auto mx-auto text-gray-500 text-sm py-4">Cerrar Sesión</button>
     </div>
-
     <div id="viewDashboard" class="hidden min-h-screen w-full max-w-md mx-auto pb-24 relative">
-        
-        <div class="p-5 flex justify-between items-center bg-gradient-to-b from-[#1a1a1a] to-transparent sticky top-0 z-20 backdrop-blur-sm">
-            <div>
+        <div class="p-5 flex justify-between items-start bg-gradient-to-b from-[#1a1a1a] to-transparent sticky top-0 z-20 backdrop-blur-sm">
+            <div class="flex-1">
                 <h2 class="text-gray-400 text-[10px] tracking-widest uppercase">PANEL DE CONTROL</h2>
-                <h1 id="lblShopName" class="text-xl font-bold uppercase truncate max-w-[200px] leading-tight">...</h1>
+                <h1 id="lblShopName" class="text-xl font-bold uppercase truncate max-w-[180px] mb-1">...</h1>
+                <div class="flex items-center gap-3">
+                    <span id="lblMainCode" onclick="copyInviteCode()" class="text-[10px] text-gold font-bold tracking-tighter active:opacity-50 transition">CODE: ...</span>
+                    <div class="flex items-center gap-2 bg-black/20 px-2 py-1 rounded-full border border-white/5">
+                        <span id="lblStatusText" class="text-[9px] font-bold text-gray-500 uppercase">CERRADO</span>
+                        <div class="relative inline-block w-7 h-4 align-middle select-none">
+                            <input type="checkbox" id="toggleOpenMain" class="toggle-checkbox absolute block w-4 h-4 rounded-full bg-white border-2 appearance-none cursor-pointer border-gray-300" onclick="toggleShopStatus()"/>
+                            <label for="toggleOpenMain" class="toggle-label block overflow-hidden h-4 rounded-full bg-gray-600 cursor-pointer"></label>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="w-10 h-10 rounded-full border border-gray-600 overflow-hidden relative" onclick="openSettings()">
-                <img id="imgHeaderAvatar" src="https://via.placeholder.com/100" class="w-full h-full object-cover">
+            <div class="w-12 h-12 rounded-full border border-gray-600 overflow-hidden relative bg-[#1a1a1a] flex items-center justify-center shadow-lg" onclick="openSettings()">
+                <img id="imgHeaderAvatar" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" class="w-full h-full object-cover" onerror="this.style.opacity='0'">
+                <i class="fa-solid fa-shop text-xs text-gray-700 absolute"></i>
             </div>
         </div>
-
         <div class="px-5 space-y-6">
-            
             <div onclick="openStory()" class="bg-[#1E1E1E] rounded-2xl p-4 flex items-center justify-between border border-gray-800 active:bg-gray-800 transition shadow-lg">
                 <div class="flex items-center gap-3">
                     <div class="relative w-12 h-12">
-                        <img id="imgStoryPrev" src="https://via.placeholder.com/100" class="w-full h-full rounded-full object-cover border-2 border-gray-700">
+                        <img id="imgStoryPrev" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=" class="w-full h-full rounded-full object-cover border-2 border-gray-700">
                         <div class="absolute -bottom-1 -right-1 bg-blue-500 rounded-full w-5 h-5 flex items-center justify-center border-2 border-[#1E1E1E]">
                             <i class="fa-solid fa-plus text-[10px] text-white"></i>
                         </div>
@@ -113,34 +109,35 @@
                     </div>
                 </div>
             </div>
-
+            <div class="flex bg-[#1E1E1E] p-1 rounded-xl border border-gray-800">
+                <button onclick="setPeriod('day')" id="btnDay" class="flex-1 py-2 text-[10px] font-bold rounded-lg transition bg-[#D50000] text-white">HOY</button>
+                <button onclick="setPeriod('week')" id="btnWeek" class="flex-1 py-2 text-[10px] font-bold rounded-lg transition text-gray-500">SEMANA</button>
+                <button onclick="setPeriod('month')" id="btnMonth" class="flex-1 py-2 text-[10px] font-bold rounded-lg transition text-gray-500">MES</button>
+                <button onclick="setPeriod('global')" id="btnGlobal" class="flex-1 py-2 text-[10px] font-bold rounded-lg transition text-gray-500">GLOBAL</button>
+            </div>
             <div class="grid grid-cols-2 gap-3">
                 <div class="bg-[#1E1E1E] p-4 rounded-2xl border border-gray-800 flex flex-col items-center">
                     <span id="lblEarnings" class="text-[#2ecc71] text-2xl font-bold">$0</span>
-                    <span class="text-[10px] text-gray-500 uppercase">Ganancias Hoy</span>
+                    <span id="lblEarningsTitle" class="text-[10px] text-gray-500 uppercase">Ganancias Hoy</span>
                 </div>
                 <div class="bg-[#1E1E1E] p-4 rounded-2xl border border-gray-800 flex flex-col items-center">
                     <span id="lblCuts" class="text-[#00D4AA] text-2xl font-bold">0</span>
-                    <span class="text-[10px] text-gray-500 uppercase">Cortes Hoy</span>
+                    <span id="lblCutsTitle" class="text-[10px] text-gray-500 uppercase">Cortes Hoy</span>
                 </div>
             </div>
-
             <button onclick="openCatalog()" class="w-full bg-[#1E1E1E] border border-gray-700 p-4 rounded-xl flex items-center justify-center gap-2 active:bg-gray-800">
                 <i class="fa-regular fa-images text-blue-400"></i>
                 <span class="font-bold text-sm text-gray-300">GESTIONAR CATÁLOGO</span>
             </button>
-
             <div>
                 <div class="flex justify-between items-end mb-3">
                     <h3 class="text-xs font-bold text-gray-500 tracking-widest">RANKING DEL EQUIPO</h3>
                     <span id="lblTeamCount" class="text-xs text-gray-600">0 miembros</span>
                 </div>
-                <div id="listRanking" class="space-y-3 pb-10">
-                    </div>
+                <div id="listRanking" class="space-y-3 pb-10"></div>
             </div>
         </div>
     </div>
-
     <div id="modalCatalog" class="fixed inset-0 bg-black z-50 hidden flex flex-col">
         <div class="p-4 flex items-center justify-between bg-[#111]">
             <button onclick="closeModal('modalCatalog')" class="w-8 h-8 flex items-center justify-center"><i class="fa-solid fa-arrow-left"></i></button>
@@ -155,15 +152,15 @@
             <input type="file" id="fileCat" accept="image/*" class="hidden" onchange="uploadCatalog(this)">
         </div>
     </div>
-
     <div id="modalStory" class="fixed inset-0 bg-black z-50 hidden flex flex-col items-center justify-center">
         <button onclick="closeModal('modalStory')" class="absolute top-5 right-5 z-20 w-10 h-10 bg-black/50 rounded-full text-white"><i class="fa-solid fa-xmark"></i></button>
-        
         <div id="storyView" class="hidden w-full h-full flex flex-col items-center justify-center relative">
             <img id="imgStoryFull" class="max-w-full max-h-full object-contain">
+            <div id="storyInteractions" class="absolute bottom-24 w-full px-10 text-center">
+                <p id="lblStoryViews" class="text-xs text-gray-400"></p>
+            </div>
             <button onclick="deleteStory()" class="absolute bottom-10 bg-red-600 px-6 py-2 rounded-full font-bold shadow-lg text-sm">ELIMINAR</button>
         </div>
-
         <div id="storyUpload" class="text-center p-6">
             <div class="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
                 <i class="fa-solid fa-camera text-2xl text-gray-500"></i>
@@ -174,290 +171,252 @@
             <input type="file" id="fileStory" accept="image/*" class="hidden" onchange="uploadStory(this)">
         </div>
     </div>
-
-    <div id="modalSettings" class="fixed inset-0 bg-black/80 z-50 hidden flex items-end justify-center backdrop-blur-sm">
-        <div class="bg-[#1E1E1E] w-full max-w-md rounded-t-3xl p-6 animate-slide-up border-t border-gray-700">
-            <div class="w-12 h-1 bg-gray-600 rounded-full mx-auto mb-6"></div>
-            
-            <div class="text-center mb-6">
-                <div class="relative w-20 h-20 mx-auto mb-3">
-                    <img id="imgAvatarEdit" class="w-full h-full rounded-full object-cover border-2 border-gray-600">
-                    <button onclick="$('fileAvatar').click()" class="absolute bottom-0 right-0 bg-blue-500 w-6 h-6 rounded-full flex items-center justify-center border border-black">
+    <div id="modalSettings" class="fixed inset-0 bg-black/40 z-50 hidden backdrop-blur-sm" onclick="closeModal('modalSettings')">
+        <div class="absolute right-0 top-0 h-full w-[60%] bg-[#121212] shadow-2xl border-l border-white/5 flex flex-col p-5 animate-slide-left" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="font-bold text-xs tracking-widest text-gray-500">OPCIONES</h2>
+                <button onclick="closeModal('modalSettings')"><i class="fa-solid fa-xmark text-gray-500"></i></button>
+            </div>
+            <div class="flex flex-col items-center mb-10">
+                <div class="relative w-20 h-20 mb-4 bg-[#1a1a1a] rounded-full flex items-center justify-center border-2 border-white/5 shadow-2xl">
+                    <img id="imgAvatarEdit" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" class="w-full h-full rounded-full object-cover" onerror="this.style.display='none'">
+                    <i class="fa-solid fa-camera text-gray-800 absolute"></i>
+                    <button onclick="$('fileAvatar').click()" class="absolute bottom-0 right-0 bg-[#D50000] w-7 h-7 rounded-full flex items-center justify-center border-2 border-[#121212] z-10">
                         <i class="fa-solid fa-pen text-[10px]"></i>
                     </button>
                     <input type="file" id="fileAvatar" accept="image/*" class="hidden" onchange="uploadAvatar(this)">
                 </div>
-                <h2 class="font-bold text-lg" id="lblSettingsName">...</h2>
-                <p class="text-xs text-gold" id="lblSettingsCode">CODE: ...</p>
+                <input type="text" id="txtEditName" class="w-full bg-white/5 border border-white/10 p-3 rounded-xl text-white text-center text-sm font-bold outline-none focus:border-[#D50000] transition" placeholder="Nombre del Salón">
             </div>
-
-            <div class="bg-black/30 p-4 rounded-xl flex items-center justify-between mb-4">
-                <span class="text-sm font-bold">Estado del Negocio</span>
-                <div class="relative inline-block w-12 h-6 align-middle select-none transition duration-200 ease-in">
-                    <input type="checkbox" id="toggleOpen" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300" onclick="toggleShopStatus()"/>
-                    <label for="toggleOpen" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-600 cursor-pointer"></label>
-                </div>
+            <div class="space-y-3">
+                <button onclick="saveShopName()" class="w-full bg-[#D50000] py-3 rounded-xl flex items-center justify-center gap-2 active:scale-95 transition mb-6">
+                    <i class="fa-solid fa-check text-xs"></i>
+                    <span class="text-[10px] font-bold">GUARDAR NOMBRE</span>
+                </button>
+                <button onclick="closeModal('modalSettings'); openCatalog()" class="w-full bg-white/5 py-4 px-4 rounded-xl flex items-center gap-3 active:scale-95 transition">
+                    <i class="fa-regular fa-images text-blue-400 text-sm"></i>
+                    <span class="text-[11px] font-bold">CATÁLOGO</span>
+                </button>
+                <button onclick="logout()" class="w-full bg-red-950/20 py-4 px-4 rounded-xl flex items-center gap-3 border border-red-900/20 mt-10">
+                    <i class="fa-solid fa-power-off text-red-500 text-sm"></i>
+                    <span class="text-[11px] font-bold text-red-500 uppercase">Cerrar Sesión</span>
+                </button>
             </div>
-
-            <button onclick="closeModal('modalSettings')" class="w-full bg-gray-700 py-3 rounded-xl font-bold text-sm mb-2">VOLVER</button>
-            <button onclick="logout()" class="w-full text-red-500 py-3 font-bold text-sm">CERRAR SESIÓN</button>
+            <p class="mt-auto text-center text-[8px] text-gray-700 tracking-widest">v3.0 PRO RELEASE</p>
         </div>
     </div>
-
     <script>
-        // CONFIGURACIÓN SUPABASE
         const SB_URL = "https://bhdmxljthtfomiwgenvf.supabase.co";
         const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJoZG14bGp0aHRmb21pd2dlbnZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3ODQ0MzYsImV4cCI6MjA4MTM2MDQzNn0.sgVh45Pb_6C500BtBfkivVRZM2cNLMBgvaPw5thGZHs";
+        const CAT_URL = "https://cfjxlxkurlpyambucmeo.supabase.co";
+        const CAT_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNmanhseGt1cmxweWFtYnVjbWVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxMzE0MzMsImV4cCI6MjA4MjcwNzQzM30.kKNSHwIy5KVa5-8scqac17gdZIgN_WH2ITYc74njO8w";
         let sb;
-
-        try { sb = supabase.createClient(SB_URL, SB_KEY); } 
-        catch (e) { alert("Error iniciando Supabase"); }
-
-        // ESTADO GLOBAL
+        try { sb = supabase.createClient(SB_URL, SB_KEY); } catch (e) { alert("Error"); }
         let currentUser = null;
         let currentShop = null;
-
-        // UTILIDADES
+        let realAdminPhone = null;
+        let currentPeriod = 'day';
         const $ = (id) => document.getElementById(id);
         const show = (id) => $(id).classList.remove('hidden');
         const hide = (id) => $(id).classList.add('hidden');
         const closeModal = (id) => hide(id);
-
-        // --- INICIO ---
         window.onload = () => {
             const saved = localStorage.getItem('barber_user_v3');
-            if(saved) {
-                currentUser = JSON.parse(saved);
-                routeUser();
-            }
+            if(saved) { currentUser = JSON.parse(saved); routeUser(); }
         };
-
         function routeUser() {
             hide('viewLogin');
-            if(!currentUser.barberia_id) {
-                $('lblSetupName').innerText = currentUser.nombre || "Barbero";
-                show('viewSetup');
-            } else {
-                loadDashboard();
-            }
+            if(!currentUser.barberia_id) { $('lblSetupName').innerText = currentUser.nombre || "Barbero"; show('viewSetup'); }
+            else { loadDashboard(); }
         }
-
-        // --- LOGIN ---
         async function doLogin() {
             show('loader');
             try {
                 let phone = $('loginPhone').value.replace(/\D/g, '').replace(/^53/, '');
                 let pass = $('loginPass').value;
-
-                const { data, error } = await sb.from('barberos').select('*').eq('telefono', phone).maybeSingle();
-                
+                const { data } = await sb.from('barberos').select('*').eq('telefono', phone).maybeSingle();
                 if(!data) throw "Usuario no encontrado";
                 if(data.clave !== pass) throw "Contraseña incorrecta";
-                if(data.node_restricted) throw "Cuenta bloqueada";
-
                 currentUser = data;
                 localStorage.setItem('barber_user_v3', JSON.stringify(data));
                 routeUser();
-
-            } catch(e) { alert(e.message || e); }
+            } catch(e) { alert(e); }
             hide('loader');
         }
-
-        // --- DASHBOARD ---
         async function loadDashboard() {
-            hide('viewSetup');
-            show('viewDashboard');
-            show('loader');
-
+            hide('viewSetup'); show('viewDashboard'); show('loader');
             try {
-                // 1. Barbería
                 const { data: shop } = await sb.from('barberias').select('*').eq('id', currentUser.barberia_id).single();
                 currentShop = shop;
-
+                const { data: adminUser } = await sb.from('barberos').select('telefono').eq('barberia_id', currentShop.id).eq('rol', 'admin').maybeSingle();
+                realAdminPhone = adminUser ? adminUser.telefono : (shop.telefono_admin || currentUser.telefono);
                 $('lblShopName').innerText = shop.nombre;
-                $('imgHeaderAvatar').src = shop.foto_url || 'https://via.placeholder.com/100';
-                
-                // Configurar Settings Modal
-                $('lblSettingsName').innerText = shop.nombre;
-                $('lblSettingsCode').innerText = "CÓDIGO: " + shop.codigo_invitacion;
-                $('imgAvatarEdit').src = shop.foto_url || 'https://via.placeholder.com/100';
-                $('toggleOpen').checked = shop.disponible;
-
-                // 2. Historia
+                $('txtEditName').value = shop.nombre;
+                let defAva = `https://ui-avatars.com/api/?name=${encodeURIComponent(shop.nombre)}&background=1a1a1a&color=D50000&bold=true&format=svg`;
+                let finalFoto = (shop.foto_url && shop.foto_url !== 'null') ? shop.foto_url : defAva;
+                $('imgHeaderAvatar').src = finalFoto;
+                $('imgAvatarEdit').src = finalFoto;
+                $('lblMainCode').innerText = "CÓDIGO: " + shop.codigo_invitacion;
+                $('toggleOpenMain').checked = shop.disponible;
+                $('lblStatusText').innerText = shop.disponible ? 'ABIERTO' : 'CERRADO';
+                $('lblStatusText').className = `text-[9px] font-bold uppercase ${shop.disponible ? 'text-green-500' : 'text-gray-500'}`;
                 checkStoryStatus();
-
-                // 3. Ranking y Dinero
                 await refreshData();
-
+                await checkAutoClosure();
+                sb.channel('cambios_salon')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'turnos', filter: `barberia_id=eq.${currentShop.id}` }, () => refreshData())
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'ingresos_extra', filter: `barberia_id=eq.${currentShop.id}` }, () => refreshData())
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'sys_cache_v4', filter: `barberia_id=eq.${currentShop.id}` }, () => refreshData())
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'interacciones_stories', filter: `barberia_id=eq.${currentShop.id}` }, () => refreshStoryViews())
+                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'barberias', filter: `id=eq.${currentShop.id}` }, (payload) => {
+                    currentShop = payload.new;
+                    let ts = Date.now();
+                    if(currentShop.foto_url) {
+                        currentShop.foto_url = currentShop.foto_url.split('?')[0] + '?t=' + ts;
+                        $('imgHeaderAvatar').src = currentShop.foto_url;
+                        $('imgAvatarEdit').src = currentShop.foto_url;
+                    }
+                    if(currentShop.historia_url) {
+                        currentShop.historia_url = currentShop.historia_url.split('?')[0] + '?t=' + ts;
+                    }
+                    currentShop.catalogo = payload.new.catalogo;
+                    $('lblShopName').innerText = currentShop.nombre;
+                    $('txtEditName').value = currentShop.nombre;
+                    $('toggleOpenMain').checked = currentShop.disponible;
+                    $('lblStatusText').innerText = currentShop.disponible ? 'ABIERTO' : 'CERRADO';
+                    $('lblStatusText').className = `text-[9px] font-bold uppercase ${currentShop.disponible ? 'text-green-500' : 'text-gray-500'}`;
+                    checkStoryStatus();
+                    if(!$('modalCatalog').classList.contains('hidden')) openCatalog();
+                    if(!$('modalStory').classList.contains('hidden')) openStory();
+                    refreshData();
+                })
+                .subscribe();
             } catch(e) { console.error(e); }
             hide('loader');
         }
-
+        async function refreshStoryViews() {
+            if(!currentShop) return;
+            const { data: views } = await sb.from('interacciones_stories').select('*').eq('barberia_id', currentShop.id);
+            if($('lblStoryViews')) $('lblStoryViews').innerText = views ? `${views.length} vistas` : "0 vistas";
+        }
+        function setPeriod(p) {
+            currentPeriod = p;
+            ['btnDay', 'btnWeek', 'btnMonth', 'btnGlobal'].forEach(id => {
+                $(id).classList.remove('bg-[#D50000]', 'text-white');
+                $(id).classList.add('text-gray-500');
+            });
+            $(`btn${p.charAt(0).toUpperCase() + p.slice(1)}`).classList.add('bg-[#D50000]', 'text-white');
+            let t = p === 'day' ? 'HOY' : p === 'week' ? 'SEMANA' : p === 'month' ? 'MES' : 'GLOBAL';
+            $('lblEarningsTitle').innerText = `GANANCIAS ${t}`;
+            $('lblCutsTitle').innerText = `CORTES ${t}`;
+            refreshData();
+        }
         async function refreshData() {
-            const today = new Date().toISOString().split('T')[0];
-            
-            const { data: turnos } = await sb.from('turnos').select('*').eq('barberia_id', currentShop.id).eq('fecha', today);
-            const { data: team } = await sb.from('barberos').select('*').eq('barberia_id', currentShop.id);
-
+            let queryTurnos = sb.from('turnos').select('*').eq('barberia_id', currentShop.id);
+            let queryExtras = sb.from('ingresos_extra').select('*').eq('barberia_id', currentShop.id);
+            let queryCache = sb.from('sys_cache_v4').select('*').eq('barberia_id', currentShop.id);
+            let tL = new Date().toLocaleDateString('en-CA');
+            queryTurnos = queryTurnos.lte('fecha', tL);
+            queryExtras = queryExtras.lte('fecha', tL);
+            queryCache = queryCache.lte('fecha', tL);
+            if(currentPeriod !== 'global') {
+                let dL = new Date();
+                if(currentPeriod === 'week') { let d = dL.getDay(); dL.setDate(dL.getDate() - (d === 0 ? 6 : d - 1)); }
+                if(currentPeriod === 'month') dL.setMonth(dL.getMonth() - 1);
+                let iso = (currentPeriod === 'day') ? tL : dL.toLocaleDateString('en-CA');
+                if(currentPeriod === 'day') {
+                    queryTurnos = queryTurnos.eq('fecha', iso); queryExtras = queryExtras.eq('fecha', iso); queryCache = queryCache.eq('fecha', iso);
+                } else {
+                    queryTurnos = queryTurnos.gte('fecha', iso); queryExtras = queryExtras.gte('fecha', iso); queryCache = queryCache.gte('fecha', iso);
+                }
+            }
+            const [{ data: turnos }, { data: extras }, { data: cache }, { data: team }] = await Promise.all([
+                queryTurnos, queryExtras, queryCache, sb.from('barberos').select('*').eq('barberia_id', currentShop.id)
+            ]);
             let mapMoney = {}, mapCuts = {}, totalMoney = 0, totalCuts = 0;
-
             if(turnos) turnos.forEach(t => {
                 let val = parseFloat(t.precio) || 0;
                 mapMoney[t.barbero_id] = (mapMoney[t.barbero_id] || 0) + val;
                 mapCuts[t.barbero_id] = (mapCuts[t.barbero_id] || 0) + 1;
-                totalMoney += val;
-                totalCuts++;
+                totalMoney += val; totalCuts++;
             });
-
+            if(extras) extras.forEach(e => {
+                let val = parseFloat(e.precio) || 0;
+                mapMoney[e.barbero_id] = (mapMoney[e.barbero_id] || 0) + val;
+                totalMoney += val;
+            });
+            if(cache) cache.forEach(c => {
+                if(c.tipo_registro === 'barbero') {
+                    let b = team.find(x => x.telefono === c.barbero_tlf);
+                    if(b) {
+                        mapMoney[b.id] = (mapMoney[b.id] || 0) + parseFloat(c.total_dinero);
+                        mapCuts[b.id] = (mapCuts[b.id] || 0) + parseInt(c.total_turnos);
+                    }
+                }
+                if(c.tipo_registro === 'salon') {
+                    totalMoney += parseFloat(c.total_dinero);
+                    totalCuts += parseInt(c.total_turnos);
+                }
+            });
             $('lblEarnings').innerText = `$${Math.floor(totalMoney)}`;
             $('lblCuts').innerText = totalCuts;
             $('lblTeamCount').innerText = `${team.length} miembros`;
-
-            // Render Ranking
             team.sort((a, b) => (mapMoney[b.id] || 0) - (mapMoney[a.id] || 0));
-            
-            const list = $('listRanking');
-            list.innerHTML = '';
-
+            const list = $('listRanking'); list.innerHTML = '';
             team.forEach((m, i) => {
                 let money = Math.floor(mapMoney[m.id] || 0);
                 let cuts = mapCuts[m.id] || 0;
-                let css = "rank-normal";
-                let icon = "";
-
-                if(i===0) { css = "rank-gold"; icon = "👑"; }
-                else if(i===1) css = "rank-silver";
-                else if(i===2) css = "rank-bronze";
-
-                // Kick Button (Solo Admin y no a sí mismo)
-                let kickBtn = "";
-                if(currentUser.rol === 'admin' && m.id !== currentUser.id) {
-                    kickBtn = `<button onclick="kickMember('${m.id}')" class="ml-2 w-8 h-8 rounded-full bg-red-900/50 flex items-center justify-center text-red-500"><i class="fa-solid fa-trash text-xs"></i></button>`;
-                }
-
-                list.insertAdjacentHTML('beforeend', `
-                    <div class="flex items-center p-3 rounded-xl ${css} shadow-lg relative">
-                        <div class="w-8 font-bold flex justify-center">${i+1}</div>
-                        <div class="flex-1 pl-2">
-                            <div class="font-bold text-sm truncate">${m.nombre} ${icon}</div>
-                            <div class="text-[10px] opacity-70">${cuts} cortes</div>
-                        </div>
-                        <div class="font-bold">$${money}</div>
-                        ${kickBtn}
-                    </div>
-                `);
+                let css = (i===0) ? "rank-gold" : (i===1) ? "rank-silver" : (i===2) ? "rank-bronze" : "rank-normal";
+                let icon = (i===0) ? "👑" : "";
+                let kickBtn = (currentUser.rol === 'admin' && m.id !== currentUser.id) ? `<button onclick="kickMember('${m.id}')" class="ml-2 w-8 h-8 rounded-full bg-red-900/50 flex items-center justify-center text-red-500"><i class="fa-solid fa-trash text-xs"></i></button>` : "";
+                list.insertAdjacentHTML('beforeend', `<div class="flex items-center p-3 rounded-xl ${css} shadow-lg relative"><div class="w-8 font-bold flex justify-center">${i+1}</div><div class="flex-1 pl-2"><div class="font-bold text-sm truncate">${m.nombre} ${icon}</div><div class="text-[10px] opacity-70">${cuts} cortes</div></div><div class="font-bold">$${money}</div>${kickBtn}</div>`);
             });
         }
-
-        // --- ACTIONS ADMIN ---
-        async function kickMember(id) {
-            if(!confirm("¿Expulsar a este barbero?")) return;
-            show('loader');
-            await sb.from('barberos').update({ barberia_id: null, rol: 'independiente' }).eq('id', id);
-            await refreshData();
-            hide('loader');
-        }
-
-        async function toggleShopStatus() {
-            const newState = $('toggleOpen').checked;
-            await sb.from('barberias').update({ disponible: newState }).eq('id', currentShop.id);
-        }
-
-        function openSettings() {
-            if(currentUser.rol === 'admin') show('modalSettings');
-            else alert("Solo el administrador puede editar el negocio");
-        }
-
-        // --- CATÁLOGO ---
         function openCatalog() {
             show('modalCatalog');
-            const grid = $('gridCatalog');
-            grid.innerHTML = '';
+            const grid = $('gridCatalog'); grid.innerHTML = '';
             let photos = currentShop.catalogo || [];
-            let phone = currentShop.telefono_admin || currentUser.telefono;
-            let cleanP = phone.replace(/\s+/g,'').replace(/\+/g,'');
-
+            let cleanP = realAdminPhone.replace(/\s+/g,'').replace(/\+/g,'').trim();
             photos.forEach(f => {
-                let url = `${SB_URL}/storage/v1/object/public/catalogo/${cleanP}/${f}`;
-                grid.insertAdjacentHTML('beforeend', `
-                    <div class="relative aspect-square bg-gray-800 rounded-lg overflow-hidden group">
-                        <img src="${url}" class="w-full h-full object-cover">
-                        <button onclick="deleteCatalog('${f}')" class="absolute top-1 right-1 bg-red-600 w-6 h-6 rounded-full flex items-center justify-center text-white"><i class="fa-solid fa-xmark text-xs"></i></button>
-                    </div>
-                `);
+                let url = `${CAT_URL}/storage/v1/object/public/catalogo/${cleanP}/${f}`;
+                grid.insertAdjacentHTML('beforeend', `<div class="relative aspect-square bg-gray-800 rounded-lg overflow-hidden group"><img src="${url}" class="w-full h-full object-cover"><button onclick="deleteCatalog('${f}')" class="absolute top-1 right-1 bg-red-600 w-6 h-6 rounded-full flex items-center justify-center text-white"><i class="fa-solid fa-xmark text-xs"></i></button></div>`);
             });
         }
-
         async function uploadCatalog(input) {
             if(!input.files[0]) return;
             show('loader');
             let file = input.files[0];
-            let phone = currentShop.telefono_admin || currentUser.telefono;
-            let cleanP = phone.replace(/\s+/g,'').replace(/\+/g,'');
+            let cleanP = realAdminPhone.replace(/\s+/g,'').replace(/\+/g,'').trim();
             let fname = `cat_${Date.now()}.jpg`;
-
-            await sb.storage.from('catalogo').upload(`${cleanP}/${fname}`, file);
-            let arr = currentShop.catalogo || [];
-            arr.push(fname);
-            await sb.from('barberias').update({ catalogo: arr }).eq('id', currentShop.id);
-            currentShop.catalogo = arr;
-            openCatalog(); // Refresh
+            try {
+                const res = await fetch(`${CAT_URL}/storage/v1/object/catalogo/${cleanP}/${fname}`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${CAT_KEY}`, 'Content-Type': 'image/jpeg', 'x-upsert': 'true' },
+                    body: file
+                });
+                if(!res.ok) throw "Error Storage";
+                let arr = currentShop.catalogo || [];
+                arr.push(fname);
+                await sb.from('barberias').update({ catalogo: arr }).eq('id', currentShop.id);
+                currentShop.catalogo = arr;
+                openCatalog();
+            } catch(e) { alert(e); }
             hide('loader');
         }
-
         async function deleteCatalog(fname) {
             if(!confirm("¿Borrar?")) return;
             show('loader');
-            let phone = currentShop.telefono_admin || currentUser.telefono;
-            let cleanP = phone.replace(/\s+/g,'').replace(/\+/g,'');
-            
-            await sb.storage.from('catalogo').remove([`${cleanP}/${fname}`]);
+            let cleanP = realAdminPhone.replace(/\s+/g,'').replace(/\+/g,'').trim();
+            await fetch(`${CAT_URL}/storage/v1/object/catalogo/${cleanP}/${fname}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${CAT_KEY}` }
+            });
             let arr = currentShop.catalogo.filter(x => x !== fname);
             await sb.from('barberias').update({ catalogo: arr }).eq('id', currentShop.id);
             currentShop.catalogo = arr;
             openCatalog();
             hide('loader');
         }
-
-        // --- SETUP (Crear/Unir) ---
-        async function createShop() {
-            let name = $('txtShopName').value;
-            if(!name) return alert("Pon un nombre");
-            show('loader');
-            
-            let code = "SHOP-" + Math.floor(1000 + Math.random() * 9000);
-            const { data, error } = await sb.from('barberias').insert({
-                nombre: name, dueño_id: currentUser.id, codigo_invitacion: code,
-                telefono_admin: currentUser.telefono, disponible: true
-            }).select().single();
-
-            if(!error) {
-                await sb.from('barberos').update({ barberia_id: data.id, rol: 'admin' }).eq('id', currentUser.id);
-                currentUser.barberia_id = data.id;
-                currentUser.rol = 'admin';
-                localStorage.setItem('barber_user_v3', JSON.stringify(currentUser));
-                loadDashboard();
-            } else { alert("Error creando"); }
-            hide('loader');
-        }
-
-        async function joinShop() {
-            let code = $('txtInviteCode').value.toUpperCase();
-            if(!code) return alert("Pon el código");
-            show('loader');
-            
-            const { data } = await sb.from('barberias').select('id').eq('codigo_invitacion', code).maybeSingle();
-            if(data) {
-                await sb.from('barberos').update({ barberia_id: data.id, rol: 'empleado' }).eq('id', currentUser.id);
-                currentUser.barberia_id = data.id;
-                currentUser.rol = 'empleado';
-                localStorage.setItem('barber_user_v3', JSON.stringify(currentUser));
-                loadDashboard();
-            } else { alert("Código inválido"); }
-            hide('loader');
-        }
-
-        // --- STORY ---
         function checkStoryStatus() {
             const has = currentShop.tiene_historia && (Date.now() - (currentShop.historia_timestamp||0) < 86400000);
             if(has) {
@@ -466,77 +425,150 @@
                 $('lblStoryStatus').innerText = "Historia Activa";
                 $('lblStoryStatus').className = "text-xs text-green-500 font-bold";
             } else {
-                $('imgStoryPrev').src = "https://via.placeholder.com/100";
+                $('imgStoryPrev').src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='gray'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='1' d='Object' /%3E%3Ccircle cx='12' cy='12' r='10' stroke='dashed' /%3E%3C/svg%3E";
                 $('imgStoryPrev').classList.add('opacity-50');
                 $('lblStoryStatus').innerText = "Subir foto 24h";
                 $('lblStoryStatus').className = "text-xs text-gray-500";
             }
         }
-
-        function openStory() {
+        async function openStory() {
             show('modalStory');
             const has = currentShop.tiene_historia && (Date.now() - (currentShop.historia_timestamp||0) < 86400000);
             if(has) {
                 show('storyView'); hide('storyUpload');
                 $('imgStoryFull').src = currentShop.historia_url;
-            } else {
-                hide('storyView'); show('storyUpload');
-            }
+                refreshStoryViews();
+            } else { hide('storyView'); show('storyUpload'); }
         }
-
         async function uploadStory(input) {
             if(!input.files[0]) return;
             show('loader');
             let file = input.files[0];
-            let name = `story_${currentShop.id}_${Date.now()}.jpg`;
-            await sb.storage.from('stories').upload(name, file);
-            let url = `${SB_URL}/storage/v1/object/public/stories/${name}`;
-            
-            await sb.from('barberias').update({
-                tiene_historia: true, historia_url: url, historia_timestamp: Date.now()
-            }).eq('id', currentShop.id);
-            
-            currentShop.tiene_historia = true;
-            currentShop.historia_url = url;
-            currentShop.historia_timestamp = Date.now();
-            
-            checkStoryStatus();
-            openStory();
+            let name = `shop_story_${currentShop.id}.jpg`;
+            try {
+                await fetch(`${SB_URL}/storage/v1/object/stories/${name}`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'image/jpeg', 'x-upsert': 'true' },
+                    body: file
+                });
+                let url = `${SB_URL}/storage/v1/object/public/stories/${name}?t=${Date.now()}`;
+                await sb.from('barberias').update({ tiene_historia: true, historia_url: url, historia_timestamp: Date.now() }).eq('id', currentShop.id);
+                currentShop.tiene_historia = true; currentShop.historia_url = url; currentShop.historia_timestamp = Date.now();
+                checkStoryStatus(); openStory();
+            } catch(e) { alert(e); }
             hide('loader');
         }
-
         async function deleteStory() {
             if(!confirm("¿Borrar?")) return;
             show('loader');
-            await sb.from('barberias').update({ tiene_historia: false, historia_url: null }).eq('id', currentShop.id);
-            currentShop.tiene_historia = false;
-            checkStoryStatus();
-            closeModal('modalStory');
+            await sb.from('barberias').update({ tiene_historia: false, historia_url: null, historia_timestamp: 0 }).eq('id', currentShop.id);
+            currentShop.tiene_historia = false; checkStoryStatus(); closeModal('modalStory'); hide('loader');
+        }
+        async function createShop() {
+            let name = $('txtShopName').value; if(!name) return;
+            show('loader');
+            let code = "SHOP-" + Math.floor(1000 + Math.random() * 9000);
+            const { data } = await sb.from('barberias').insert({ nombre: name, dueño_id: currentUser.id, codigo_invitacion: code, telefono_admin: currentUser.telefono, disponible: true }).select().single();
+            if(data) {
+                await sb.from('barberos').update({ barberia_id: data.id, rol: 'admin' }).eq('id', currentUser.id);
+                currentUser.barberia_id = data.id; currentUser.rol = 'admin';
+                localStorage.setItem('barber_user_v3', JSON.stringify(currentUser)); loadDashboard();
+            }
             hide('loader');
         }
-
-        function logout() {
-            localStorage.removeItem('barber_user_v3');
-            location.reload();
+        async function joinShop() {
+            let code = $('txtInviteCode').value.toUpperCase(); if(!code) return;
+            show('loader');
+            const { data } = await sb.from('barberias').select('id').eq('codigo_invitacion', code).maybeSingle();
+            if(data) {
+                await sb.from('barberos').update({ barberia_id: data.id, rol: 'empleado' }).eq('id', currentUser.id);
+                currentUser.barberia_id = data.id; currentUser.rol = 'empleado';
+                localStorage.setItem('barber_user_v3', JSON.stringify(currentUser)); loadDashboard();
+            }
+            hide('loader');
         }
-
-        // AVATAR UPLOAD
+        function logout() { localStorage.removeItem('barber_user_v3'); location.reload(); }
         async function uploadAvatar(input) {
             if(!input.files[0]) return;
             show('loader');
             let file = input.files[0];
-            let name = `avatar_${currentShop.id}_${Date.now()}.jpg`;
-            await sb.storage.from('perfiles').upload(`avatars/${name}`, file);
-            let url = `${SB_URL}/storage/v1/object/public/perfiles/avatars/${name}`;
-            
+            let name = `shop_avatar_${currentShop.id}.jpg`;
+            await fetch(`${SB_URL}/storage/v1/object/perfiles/avatars/${name}`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'image/jpeg', 'x-upsert': 'true' },
+                body: file
+            });
+            let url = `${SB_URL}/storage/v1/object/public/perfiles/avatars/${name}?t=${Date.now()}`;
             await sb.from('barberias').update({ foto_url: url }).eq('id', currentShop.id);
-            $('imgHeaderAvatar').src = url;
-            $('imgAvatarEdit').src = url;
+            $('imgHeaderAvatar').src = url; $('imgAvatarEdit').src = url;
             hide('loader');
         }
-
-        // Animación SlideUp
-        document.head.insertAdjacentHTML("beforeend", `<style>.animate-slide-up { animation: slideUp 0.3s ease-out; } @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }</style>`)
+        async function kickMember(id) {
+            if(!confirm("¿Expulsar?")) return;
+            show('loader');
+            await sb.from('barberos').update({ barberia_id: null, rol: 'independiente' }).eq('id', id);
+            await refreshData();
+            hide('loader');
+        }
+        async function toggleShopStatus() {
+            const newState = $('toggleOpenMain').checked;
+            $('lblStatusText').innerText = newState ? 'ABIERTO' : 'CERRADO';
+            $('lblStatusText').className = `text-[9px] font-bold uppercase ${newState ? 'text-green-500' : 'text-gray-500'}`;
+            await sb.from('barberias').update({ disponible: newState }).eq('id', currentShop.id);
+        }
+        function copyInviteCode() {
+            const code = $('lblMainCode').innerText.replace('CÓDIGO: ', '');
+            navigator.clipboard.writeText(code);
+            alert("Código copiado: " + code);
+        }
+        async function saveShopName() {
+            const newName = $('txtEditName').value.trim();
+            if(!newName) return;
+            show('loader');
+            const { error } = await sb.from('barberias').update({ nombre: newName }).eq('id', currentShop.id);
+            if(!error) {
+                currentShop.nombre = newName;
+                $('lblShopName').innerText = newName;
+                alert("Nombre actualizado");
+            }
+            hide('loader');
+        }
+        async function checkAutoClosure() {
+            let yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const dateStr = yesterday.toLocaleDateString('en-CA');
+            const { data } = await sb.from('sys_cache_v4').select('id').eq('barberia_id', currentShop.id).eq('fecha', dateStr).eq('tipo_registro', 'salon').maybeSingle();
+            if(!data && currentUser.rol === 'admin') {
+                const msg = document.querySelector('#loader p');
+                const oldMsg = msg.innerText;
+                msg.innerText = "EJECUTANDO CIERRE DIARIO DEL SALÓN...";
+                show('loader');
+                await performClosure(dateStr);
+                msg.innerText = oldMsg;
+                hide('loader');
+            }
+        }
+        async function performClosure(fechaTarget) {
+            try {
+                const { data: team } = await sb.from('barberos').select('*').eq('barberia_id', currentShop.id);
+                const { data: turnos } = await sb.from('turnos').select('*').eq('barberia_id', currentShop.id).eq('fecha', fechaTarget).eq('estado', 'aceptado');
+                const { data: extras } = await sb.from('ingresos_extra').select('*').eq('barberia_id', currentShop.id).eq('fecha', fechaTarget);
+                let logs = [];
+                team.forEach(m => {
+                    let money = 0, cuts = 0;
+                    if(turnos) turnos.filter(t => t.barbero_id === m.id).forEach(t => { money += parseFloat(t.precio); cuts++; });
+                    if(extras) extras.filter(e => e.barbero_id === m.id).forEach(e => { money += parseFloat(e.precio); });
+                    if(money > 0 || cuts > 0) {
+                        logs.push({ barberia_id: currentShop.id, barbero_tlf: m.telefono, fecha: fechaTarget, total_dinero: money.toString(), total_turnos: cuts.toString(), tipo_registro: 'barbero' });
+                    }
+                });
+                let totalM = logs.reduce((acc, l) => acc + parseFloat(l.total_dinero), 0);
+                let totalC = logs.reduce((acc, l) => acc + parseInt(l.total_turnos), 0);
+                logs.push({ barberia_id: currentShop.id, barbero_tlf: realAdminPhone, fecha: fechaTarget, total_dinero: totalM.toString(), total_turnos: totalC.toString(), tipo_registro: 'salon' });
+                await sb.from('sys_cache_v4').upsert(logs, { onConflict: 'barberia_id,fecha,tipo_registro,barbero_tlf' });
+            } catch(e) { console.error("Error en cierre:", e); }
+        }
+        function openSettings() { if(currentUser.rol === 'admin') show('modalSettings'); else alert("Solo Admin"); }
     </script>
 </body>
 </html>
