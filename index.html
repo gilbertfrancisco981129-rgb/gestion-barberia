@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Barber Master Pro</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="BarberMaster">
+    <link rel="apple-touch-icon" href="https://bhdmxljthtfomiwgenvf.supabase.co/storage/v1/object/public/perfiles/avatars/logo_app.png">
     <meta http-equiv="Expires" content="0">
     <meta http-equiv="Last-Modified" content="0">
     <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
@@ -11,6 +15,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         body { background-color: #000; color: white; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
         .rank-gold { background: linear-gradient(135deg, #FFD700 0%, #FDB931 100%); color: black; box-shadow: 0 0 15px rgba(255, 215, 0, 0.4); border: 2px solid #FFD700; }
@@ -21,11 +27,21 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .input-app { width: 100%; background: #1E1E1E; border: 1px solid #333; color: white; padding: 12px; border-radius: 12px; outline: none; transition: 0.3s; }
         .input-app:focus { border-color: #D50000; background: #252525; }
+        .hidden-field { display: none; }
+        .tab-active { color: white; border-bottom: 2px solid #D50000; }
+        .tab-inactive { color: #666; border-bottom: 1px solid #333; }
         .toggle-checkbox:checked { right: 0; border-color: #68D391; }
         .toggle-checkbox:checked + .toggle-label { background-color: #68D391; }
         button { touch-action: manipulation; cursor: pointer; } 
         .animate-slide-left { animation: slideLeft 0.3s ease-out; }
         @keyframes slideLeft { from { transform: translateX(100%); } to { transform: translateX(0); } }
+                @keyframes pulse-lock { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        .animate-pulse-lock { animation: pulse-lock 1.5s infinite; }
+        @keyframes slide-up-security { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .animate-security { animation: slide-up-security 0.4s ease-out; }
+        .security-screen { position: fixed; inset: 0; background: #0A0A0A; z-index: 10000; display: flex; flex-direction: column; padding: 30px; overflow-y: auto; }
+        .monospace-font { font-family: 'Courier New', Courier, monospace; }
+
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -37,12 +53,22 @@
         <div class="w-20 h-20 bg-red-900/20 rounded-full flex items-center justify-center mb-6 border border-red-900/40">
             <i class="fa-solid fa-scissors text-3xl text-white"></i>
         </div>
-        <h1 class="text-2xl font-bold tracking-[0.2em] mb-1 text-center">BARBER MASTER</h1>
-        <p class="text-gray-500 text-xs mb-10 text-center">ACCESO EXCLUSIVO</p>
+        <h1 class="text-2xl font-bold tracking-[0.2em] mb-8 text-center">BARBER MASTER</h1>
+        <div class="flex w-full mb-8">
+            <button id="tabLogin" onclick="switchMode(false)" class="flex-1 pb-3 text-xs font-bold tracking-widest tab-active transition">INICIAR SESIÓN</button>
+            <button id="tabRegister" onclick="switchMode(true)" class="flex-1 pb-3 text-xs font-bold tracking-widest tab-inactive transition">CREAR CUENTA</button>
+        </div>
         <div class="w-full space-y-4">
+            <input type="text" id="regName" placeholder="Tu Nombre Completo" class="input-app hidden-field">
+            <select id="regProvincia" class="input-app hidden-field bg-[#1E1E1E]">
+                <option value="">Selecciona tu provincia</option>
+            </select>
             <input type="tel" id="loginPhone" placeholder="Teléfono" class="input-app">
-            <input type="password" id="loginPass" placeholder="Contraseña" class="input-app">
-            <button type="button" onclick="doLogin()" class="w-full bg-[#D50000] text-white font-bold py-4 rounded-xl shadow-lg shadow-red-900/20 active:scale-95 transition touch-manipulation">
+            <div class="relative">
+                <input type="password" id="loginPass" placeholder="Contraseña" class="input-app pr-10">
+                <i class="fa-solid fa-eye absolute right-4 top-4 text-gray-500 cursor-pointer" onclick="togglePass()"></i>
+            </div>
+            <button type="button" id="btnAction" onclick="doAction()" class="w-full bg-[#D50000] text-white font-bold py-4 rounded-xl shadow-lg shadow-red-900/20 active:scale-95 transition touch-manipulation">
                 INICIAR SESIÓN
             </button>
         </div>
@@ -59,16 +85,6 @@
             <input type="text" id="txtShopName" placeholder="Nombre del Negocio" class="input-app mb-4 text-sm">
             <button onclick="createShop()" class="w-full bg-gold text-black font-bold py-3 rounded-xl text-sm">
                 INICIAR COMO DUEÑO
-            </button>
-        </div>
-        <div class="bg-[#1E1E1E] p-5 rounded-2xl border border-gray-800">
-            <div class="flex items-center gap-3 mb-4">
-                <i class="fa-solid fa-users text-[#00D4AA]"></i>
-                <h3 class="font-bold text-[#00D4AA]">UNIRME A EQUIPO</h3>
-            </div>
-            <input type="text" id="txtInviteCode" placeholder="Código (Ej: SHOP-1234)" class="input-app mb-4 text-sm uppercase">
-            <button onclick="joinShop()" class="w-full bg-[#00D4AA] text-black font-bold py-3 rounded-xl text-sm">
-                INGRESAR
             </button>
         </div>
         <button onclick="logout()" class="mt-auto mx-auto text-gray-500 text-sm py-4">Cerrar Sesión</button>
@@ -91,7 +107,7 @@
             </div>
             <div class="w-12 h-12 rounded-full border border-gray-600 overflow-hidden relative bg-[#1a1a1a] flex items-center justify-center shadow-lg" onclick="openSettings()">
                 <img id="imgHeaderAvatar" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" class="w-full h-full object-cover" onerror="this.style.opacity='0'">
-                <i class="fa-solid fa-shop text-xs text-gray-700 absolute"></i>
+                <i class="fa-solid fa-sliders text-xs text-gray-400 absolute"></i>
             </div>
         </div>
         <div class="px-5 space-y-6">
@@ -197,6 +213,10 @@
                     <i class="fa-regular fa-images text-blue-400 text-sm"></i>
                     <span class="text-[11px] font-bold">CATÁLOGO</span>
                 </button>
+                <button onclick="iniciarGPS()" class="w-full bg-white/5 py-4 px-4 rounded-xl flex items-center gap-3 active:scale-95 transition">
+                    <i class="fa-solid fa-location-dot text-green-400 text-sm"></i>
+                    <span class="text-[11px] font-bold">UBICACIÓN SALÓN</span>
+                </button>
                 <button onclick="logout()" class="w-full bg-red-950/20 py-4 px-4 rounded-xl flex items-center gap-3 border border-red-900/20 mt-10">
                     <i class="fa-solid fa-power-off text-red-500 text-sm"></i>
                     <span class="text-[11px] font-bold text-red-500 uppercase">Cerrar Sesión</span>
@@ -205,6 +225,61 @@
             <p class="mt-auto text-center text-[8px] text-gray-700 tracking-widest">v3.0 PRO RELEASE</p>
         </div>
     </div>
+
+    <div id="modalMapPick" class="fixed inset-0 bg-black/80 z-[60] hidden flex flex-col items-center justify-end sm:justify-center p-0 sm:p-4 backdrop-blur-sm">
+        <div class="w-full max-w-md bg-[#1a1a1a] flex flex-col h-[85vh] sm:h-[600px] rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl relative animate-slide-up">
+            <div class="p-4 bg-white/5 border-b border-white/10 flex justify-between items-center z-10">
+                <h3 class="font-bold text-sm text-white tracking-widest">UBICACIÓN DEL NEGOCIO</h3>
+                <button onclick="closeModal('modalMapPick')" class="w-8 h-8 rounded-full bg-black/20 flex items-center justify-center text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="flex-1 relative w-full h-full bg-gray-200">
+                <div id="mapPickerContainer" class="w-full h-full z-0"></div>
+                <div class="absolute bottom-24 right-4 flex flex-col gap-3 z-[400]">
+                    <button onclick="centrarEnNegocio()" class="w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center text-blue-600 active:scale-90 transition border border-gray-200">
+                        <i class="fa-solid fa-shop text-lg"></i>
+                    </button>
+                    <button onclick="centrarEnMi()" class="w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center text-green-600 active:scale-90 transition border border-gray-200">
+                        <i class="fa-solid fa-crosshairs text-lg"></i>
+                    </button>
+                </div>
+                <div class="absolute top-4 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur px-4 py-2 rounded-full shadow-md z-[400] border border-gray-200">
+                    <p class="text-[10px] font-bold text-gray-600">TOCA EL MAPA PARA MOVER EL PIN</p>
+                </div>
+            </div>
+            <div class="p-4 bg-[#1a1a1a] border-t border-white/10 z-10">
+                <button onclick="guardarUbicacion()" class="w-full bg-[#2ecc71] text-black font-black py-4 rounded-xl shadow-[0_5px_15px_rgba(46,204,113,0.3)] active:scale-95 transition tracking-wide text-sm">
+                    CONFIRMAR UBICACIÓN
+                </button>
+            </div>
+        </div>
+    </div>
+        <div id="modalSaaS" class="security-screen hidden animate-security">
+        <div class="max-w-md mx-auto w-full pt-10">
+            <i class="fa-solid fa-sync-alt text-[#FF3D00] text-5xl mb-6 animate-pulse-lock"></i>
+            <h1 class="text-4xl font-bold mb-3 leading-tight text-white">Estado del<br>Servicio</h1>
+            <p class="text-gray-500 text-sm mb-10">El nodo local ha perdido conexión con el clúster principal. Se requiere validación manual.</p>
+            <div id="txtPriceDisplay" class="text-5xl font-bold mb-10 text-white">0</div>
+            <div class="space-y-6 mb-10">
+                <div class="flex items-center justify-between border-b border-white/5 pb-4">
+                    <span id="txtCardNumber" class="monospace-font text-lg text-gray-200">....</span>
+                    <button onclick="copyToClipboard('txtCardNumber')" class="text-[#FF3D00] text-xs font-bold border border-[#FF3D00]/20 px-4 py-2 rounded-full">COPIAR</button>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span id="txtConfirmPhone" class="monospace-font text-lg text-gray-200">....</span>
+                    <button onclick="copyToClipboard('txtConfirmPhone')" class="text-[#FF3D00] text-xs font-bold border border-[#FF3D00]/20 px-4 py-2 rounded-full">COPIAR</button>
+                </div>
+            </div>
+            <div class="flex items-center gap-3 mb-6">
+                <i class="fa-solid fa-triangle-exclamation text-gray-600 text-xs"></i>
+                <p class="text-gray-500 text-[11px]">Nota: Valida tu sesión enviando la captura de referencia a soporte técnico.</p>
+            </div>
+            <button onclick="executeSync()" id="btnSendProof" class="w-full bg-[#FF3D00] text-white font-bold py-5 rounded-[30px] shadow-lg mb-4 active:scale-95 transition">VALIDAR ACCESO</button>
+            <button onclick="checkSaaS()" class="w-full border border-white/10 text-gray-600 py-4 rounded-[25px] text-sm">Reintentar Conexión</button>
+        </div>
+    </div>
+    
+
+
     <script>
         const SB_URL = "https://bhdmxljthtfomiwgenvf.supabase.co";
         const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJoZG14bGp0aHRmb21pd2dlbnZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3ODQ0MzYsImV4cCI6MjA4MTM2MDQzNn0.sgVh45Pb_6C500BtBfkivVRZM2cNLMBgvaPw5thGZHs";
@@ -212,6 +287,8 @@
         const CAT_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNmanhseGt1cmxweWFtYnVjbWVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxMzE0MzMsImV4cCI6MjA4MjcwNzQzM30.kKNSHwIy5KVa5-8scqac17gdZIgN_WH2ITYc74njO8w";
         let sb;
         try { sb = supabase.createClient(SB_URL, SB_KEY); } catch (e) { alert("Error"); }
+        let isRegisterMode = false;
+        const provincias = ["Pinar del Río", "Artemisa", "La Habana", "Mayabeque", "Matanzas", "Cienfuegos", "Villa Clara", "Sancti Spíritus", "Ciego de Ávila", "Camagüey", "Las Tunas", "Holguín", "Granma", "Santiago de Cuba", "Guantánamo", "Isla de la Juventud"];
         let currentUser = null;
         let currentShop = null;
         let realAdminPhone = null;
@@ -221,6 +298,8 @@
         const hide = (id) => $(id).classList.add('hidden');
         const closeModal = (id) => hide(id);
         window.onload = () => {
+            let sel = $('regProvincia');
+            provincias.forEach(p => { let o = document.createElement('option'); o.value = p; o.innerText = p; sel.appendChild(o); });
             const saved = localStorage.getItem('barber_user_v3');
             if(saved) { currentUser = JSON.parse(saved); routeUser(); }
         };
@@ -229,16 +308,73 @@
             if(!currentUser.barberia_id) { $('lblSetupName').innerText = currentUser.nombre || "Barbero"; show('viewSetup'); }
             else { loadDashboard(); }
         }
+        function switchMode(reg) {
+            isRegisterMode = reg;
+            $('regName').style.display = reg ? 'block' : 'none';
+            $('regProvincia').style.display = reg ? 'block' : 'none';
+            $('btnAction').innerText = reg ? "CREAR CUENTA" : "INICIAR SESIÓN";
+            $('tabLogin').className = reg ? "flex-1 pb-3 text-xs font-bold tracking-widest tab-inactive transition" : "flex-1 pb-3 text-xs font-bold tracking-widest tab-active transition";
+            $('tabRegister').className = reg ? "flex-1 pb-3 text-xs font-bold tracking-widest tab-active transition" : "flex-1 pb-3 text-xs font-bold tracking-widest tab-inactive transition";
+        }
+        function togglePass() {
+            let i = $('loginPass');
+            i.type = (i.type === 'password') ? 'text' : 'password';
+        }
+        function doAction() { if(isRegisterMode) doRegister(); else doLogin(); }
         async function doLogin() {
             show('loader');
             try {
                 let phone = $('loginPhone').value.replace(/\D/g, '').replace(/^53/, '');
                 let pass = $('loginPass').value;
+                if(!phone || !pass) throw "Faltan datos";
                 const { data } = await sb.from('barberos').select('*').eq('telefono', phone).maybeSingle();
                 if(!data) throw "Usuario no encontrado";
+                if(data.node_restricted) throw "Cuenta Restringida";
                 if(data.clave !== pass) throw "Contraseña incorrecta";
+                let serverId = data.id;
+                localStorage.setItem('secure_id', serverId);
+                if(data.node_restricted) throw "Dispositivo Bloqueado";
+                await sb.from('barberos').update({ ultima_conexion: new Date().toISOString() }).eq('telefono', phone);
                 currentUser = data;
-                localStorage.setItem('barber_user_v3', JSON.stringify(data));
+                localStorage.setItem('barber_user_v3', JSON.stringify(currentUser));
+                routeUser();
+            } catch(e) { alert(e); }
+            hide('loader');
+        }
+        async function doRegister() {
+            let name = $('regName').value.trim();
+            let prov = $('regProvincia').value;
+            let phone = $('loginPhone').value.replace(/\D/g, '').replace(/^53/, '');
+            let pass = $('loginPass').value.trim();
+            if(!name || !phone || !pass || !prov) return alert("Completa todos los campos");
+            if(pass.length < 8 || !/[A-Z]/.test(pass) || !/[^a-zA-Z0-9]/.test(pass)) return alert("Contraseña débil: Mín 8 caracteres, 1 Mayúscula, 1 Símbolo (Ej: ., -, @, #)");
+            show('loader');
+            try {
+                let myId = localStorage.getItem('secure_id');
+                if(!myId) { myId = `barber_${Date.now()}_${Math.random().toString(36).substr(2,9)}`; localStorage.setItem('secure_id', myId); }
+                const { data: exist } = await sb.from('barberos').select('id').eq('telefono', phone).maybeSingle();
+                if(exist) throw "El teléfono ya existe";
+                const { data: banned } = await sb.from('barberos').select('id').eq('id', myId).eq('node_restricted', true).maybeSingle();
+                if(banned) throw "Dispositivo Bloqueado";
+                let expDate = new Date(); expDate.setDate(expDate.getDate() + 30);
+                let newUser = {
+                    id: myId,
+                    nombre: name,
+                    telefono: phone,
+                    clave: pass,
+                    provincia: prov,
+                    modelo_dispositivo: "Web Browser",
+                    version_app: "3.0 Web",
+                    ultima_conexion: new Date().toISOString(),
+                    verificado: true,
+                    disponible: true,
+                    node_restricted: false,
+                    uplink_timeout: expDate.toISOString()
+                };
+                const { error } = await sb.from('barberos').insert(newUser);
+                if(error) throw error.message;
+                currentUser = newUser;
+                localStorage.setItem('barber_user_v3', JSON.stringify(currentUser));
                 routeUser();
             } catch(e) { alert(e); }
             hide('loader');
@@ -291,6 +427,7 @@
                     refreshData();
                 })
                 .subscribe();
+                checkSaaS();
             } catch(e) { console.error(e); }
             hide('loader');
         }
@@ -467,13 +604,26 @@
         async function createShop() {
             let name = $('txtShopName').value; if(!name) return;
             show('loader');
-            let code = "SHOP-" + Math.floor(1000 + Math.random() * 9000);
-            const { data } = await sb.from('barberias').insert({ nombre: name, dueño_id: currentUser.id, codigo_invitacion: code, telefono_admin: currentUser.telefono, disponible: true }).select().single();
-            if(data) {
-                await sb.from('barberos').update({ barberia_id: data.id, rol: 'admin' }).eq('id', currentUser.id);
-                currentUser.barberia_id = data.id; currentUser.rol = 'admin';
-                localStorage.setItem('barber_user_v3', JSON.stringify(currentUser)); loadDashboard();
-            }
+            try {
+                const { data: bData } = await sb.from('barberos').select('provincia,lat,lng,telefono').eq('id', currentUser.id).single();
+                let code = "SHOP-" + Math.floor(1000 + Math.random() * 9000);
+                const { data } = await sb.from('barberias').insert({ 
+                    nombre: name, 
+                    dueño_id: currentUser.id, 
+                    codigo_invitacion: code, 
+                    telefono_admin: bData.telefono, 
+                    provincia: bData.provincia,
+                    lat: bData.lat,
+                    lng: bData.lng,
+                    disponible: true 
+                }).select().single();
+                
+                if(data) {
+                    await sb.from('barberos').update({ barberia_id: data.id, rol: 'admin' }).eq('id', currentUser.id);
+                    currentUser.barberia_id = data.id; currentUser.rol = 'admin';
+                    localStorage.setItem('barber_user_v3', JSON.stringify(currentUser)); loadDashboard();
+                }
+            } catch(e) { alert("Error creando salón: " + e.message); }
             hide('loader');
         }
         async function joinShop() {
@@ -518,7 +668,12 @@
         }
         function copyInviteCode() {
             const code = $('lblMainCode').innerText.replace('CÓDIGO: ', '');
-            navigator.clipboard.writeText(code);
+            const el = document.createElement('textarea');
+            el.value = code;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
             alert("Código copiado: " + code);
         }
         async function saveShopName() {
@@ -569,7 +724,174 @@
             } catch(e) { console.error("Error en cierre:", e); }
         }
         function openSettings() { if(currentUser.rol === 'admin') show('modalSettings'); else alert("Solo Admin"); }
+
+        let mapInstance = null;
+        let markerInstance = null;
+        let selectedLat = 23.1136;
+        let selectedLng = -82.3666;
+
+        function iniciarGPS() {
+            closeModal('modalSettings');
+            let lat = currentShop.lat || 23.1136;
+            let lng = currentShop.lng || -82.3666;
+            if (currentShop.lat && currentShop.lat !== 0) {
+                abrirMapa(lat, lng);
+            } else {
+                centrarEnMi(true);
+            }
+        }
+
+        function abrirMapa(lat, lng) {
+            show('modalMapPick');
+            selectedLat = lat;
+            selectedLng = lng;
+            setTimeout(() => {
+                if (mapInstance) mapInstance.remove();
+                mapInstance = L.map('mapPickerContainer', { zoomControl: false }).setView([lat, lng], 16);
+                
+                L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+                    maxZoom: 21,
+                    subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+                }).addTo(mapInstance);
+
+                const pinIcon = L.divIcon({
+                    html: '<i class="fa-solid fa-location-dot" style="font-size:38px; color:#D50000; filter:drop-shadow(0 4px 6px rgba(0,0,0,0.4));"></i>',
+                    className: 'dummy-icon',
+                    iconSize: [40, 40],
+                    iconAnchor: [20, 38]
+                });
+
+                if (markerInstance) mapInstance.removeLayer(markerInstance);
+                markerInstance = L.marker([lat, lng], {icon: pinIcon}).addTo(mapInstance);
+
+                mapInstance.on('click', (e) => {
+                    const { lat, lng } = e.latlng;
+                    selectedLat = lat; selectedLng = lng;
+                    markerInstance.setLatLng([lat, lng]);
+                    mapInstance.panTo([lat, lng]);
+                });
+            }, 300);
+        }
+
+        function centrarEnMi(firstTime = false) {
+            if (firstTime) show('loader');
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        if (firstTime) { hide('loader'); abrirMapa(pos.coords.latitude, pos.coords.longitude); }
+                        else {
+                            const { latitude, longitude } = pos.coords;
+                            mapInstance.setView([latitude, longitude], 17);
+                            markerInstance.setLatLng([latitude, longitude]);
+                            selectedLat = latitude; selectedLng = longitude;
+                        }
+                    },
+                    (err) => {
+                        if (firstTime) { hide('loader'); abrirMapa(23.1136, -82.3666); }
+                        alert("No se pudo obtener tu ubicación GPS.");
+                    }, { enableHighAccuracy: true }
+                );
+            } else { if(firstTime) hide('loader'); alert("GPS no soportado"); }
+        }
+
+        function centrarEnNegocio() {
+            if (currentShop.lat && currentShop.lat !== 0) {
+                mapInstance.setView([currentShop.lat, currentShop.lng], 16);
+                markerInstance.setLatLng([currentShop.lat, currentShop.lng]);
+                selectedLat = currentShop.lat; selectedLng = currentShop.lng;
+            } else {
+                alert("El negocio no tiene ubicación guardada aún.");
+            }
+        }
+
+        async function guardarUbicacion() {
+            show('loader');
+            try {
+                const { error } = await sb.from('barberias').update({ lat: selectedLat, lng: selectedLng }).eq('id', currentShop.id);
+                if (error) throw error;
+                currentShop.lat = selectedLat; currentShop.lng = selectedLng;
+                closeModal('modalMapPick');
+                alert("Ubicación Guardada Correctamente");
+            } catch (e) { alert("Error: " + e.message); }
+            hide('loader');
+        }
+                let UPLINK_VAL = "250";
+        let ADMIN_PHONE = "51881471";
+        let TEL_CONFIRM = "51881471";
+
+        async function checkSaaS() {
+            if (!currentUser) return;
+            try {
+                const { data: sys } = await sb.from('sistema').select('*').eq('id', 'config').maybeSingle();
+                if (sys) {
+                    UPLINK_VAL = sys.data_packet_threshold || "250";
+                    ADMIN_PHONE = sys.telefono_admin || "51881471";
+                    TEL_CONFIRM = sys.telefono_confirmacion || "51881471";
+                    $('txtPriceDisplay').innerText = UPLINK_VAL;
+                    $('txtCardNumber').innerText = sys.node_reference_id || currentUser.id;
+                    $('txtConfirmPhone').innerText = TEL_CONFIRM;
+                }
+                const { data: user } = await sb.from('barberos').select('uplink_timeout, cuenta_eliminada').eq('id', currentUser.id).single();
+                if (user && user.cuenta_eliminada) {
+                    logout();
+                    return;
+                }
+                if (user && user.uplink_timeout) {
+                    let dateVenc = new Date(user.uplink_timeout);
+                    let now = new Date();
+                    if (now > dateVenc) { show('modalSaaS'); } 
+                    else { hide('modalSaaS'); }
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        setInterval(checkSaaS, 10000);
+
+        function copyToClipboard(id) {
+            const text = $(id).innerText;
+            const el = document.createElement('textarea');
+            el.value = text;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            alert("Copiado: " + text);
+        }
+
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+        });
+
+        function installApp() {
+            const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            if (isiOS) {
+                alert("INSTALACIÓN:\n1. Toca el botón 'Compartir' (cuadrado con flecha abajo).\n2. Elige 'Añadir a pantalla de inicio'.");
+            } else {
+                alert("INSTALACIÓN:\n1. Toca los 3 puntos arriba a la derecha.\n2. Elige 'Instalar aplicación' o 'Añadir a pantalla de inicio'.");
+            }
+        }
+
+        async function executeSync() {
+            const btn = $('btnSendProof');
+            btn.innerText = "ENVIANDO...";
+            btn.disabled = true;
+            try {
+                await sb.from('node_handshakes').insert({ 
+                    barbero_id: currentUser.id, 
+                    sync_reference: "UPLINK_IMG_REQ", 
+                    quota_req: UPLINK_VAL, 
+                    status: "awaiting_sync" 
+                });
+                let msg = `Hola, soy ID: ${currentUser.id}.\nEnvío captura de pantalla 👇`;
+                let num = ADMIN_PHONE.replace(/\D/g, '');
+                window.open(`https://api.whatsapp.com/send?phone=${num}&text=${encodeURIComponent(msg)}`);
+                btn.innerText = "CAPTURA ENVIADA";
+            } catch (e) { alert("Error"); }
+            setTimeout(() => { btn.innerText = "VALIDAR ACCESO"; btn.disabled = false; }, 3000);
+        }
+
     </script>
 </body>
-</html>
-
+            </html>
